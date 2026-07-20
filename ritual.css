@@ -1,0 +1,26 @@
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; color: #eadfbe; font-family: "SimSun", "宋体", serif; background: linear-gradient(90deg, rgba(4,5,6,.82), rgba(4,5,6,.18) 45%, rgba(4,5,6,.76)), url("../images/zhirensha-promo-keyart.png") center / cover fixed #060708; }
+.prologue-shell { min-height: 100vh; display: grid; align-items: center; padding: clamp(24px, 6vw, 88px); }
+.mail-window { width: min(700px, 100%); border: 1px solid rgba(202,164,90,.68); background: rgba(11,9,7,.86); box-shadow: 0 26px 90px rgba(0,0,0,.62), inset 0 0 0 10px rgba(202,164,90,.04); }
+.window-bar, .browser-bar { min-height: 42px; display: flex; align-items: center; gap: 8px; padding: 0 15px; border-bottom: 1px solid rgba(202,164,90,.3); background: linear-gradient(90deg, #27130f, #100c0a); }
+.window-bar span, .browser-bar i { width: 10px; height: 10px; border-radius: 50%; background: #a93627; box-shadow: 18px 0 #c79a4a, 36px 0 #5d805e; }
+.window-bar b { margin-left: 35px; color: #bda678; font-size: .9rem; font-weight: normal; }
+.mail-meta { padding: 22px 28px 14px; border-bottom: 1px solid rgba(202,164,90,.22); color: #b8aa8d; }
+.mail-meta p { margin: 5px 0; line-height: 1.6; }
+.mail-meta b { display: inline-block; width: 76px; color: #e2c378; font-weight: normal; }
+.mail-copy { padding: 25px 28px 18px; font-size: clamp(1.05rem, 2vw, 1.22rem); line-height: 2; }
+.mail-copy p { margin: 0 0 14px; }
+#openArchive { margin: 4px 28px 30px; border: 1px solid #c99d57; background: linear-gradient(180deg, #60301e, #1e0b08); color: #f5dfa3; padding: 12px 18px; font: inherit; cursor: pointer; }
+#openArchive:hover { border-color: #f1cf7a; box-shadow: 0 0 22px rgba(201,157,87,.2); }
+.browser-launch { position: fixed; z-index: 10; inset: 0; display: grid; place-items: center; padding: 20px; background: rgba(2,3,4,.72); opacity: 0; pointer-events: none; transition: opacity .25s ease; }
+.browser-launch.show { opacity: 1; pointer-events: auto; }
+.browser-frame { width: min(860px, 100%); min-height: 360px; overflow: hidden; border: 1px solid rgba(202,164,90,.66); background: #0a0b0a; box-shadow: 0 28px 100px rgba(0,0,0,.7); transform: translateY(18px) scale(.97); transition: transform .3s ease; }
+.browser-launch.show .browser-frame { transform: translateY(0) scale(1); }
+.browser-bar i { display: block; }
+.browser-bar span { margin-left: 35px; color: #d8c69a; font-size: .9rem; }
+.browser-address { margin: 18px 22px; border: 1px solid rgba(202,164,90,.36); padding: 9px 12px; color: #9d978a; font: .9rem Consolas, monospace; }
+.restore-copy { display: grid; place-items: center; gap: 10px; margin-top: 78px; color: #dfc581; }
+.restore-copy b { font: 1.6rem "STXingkai", "KaiTi", serif; font-weight: normal; }.restore-copy span { color: #a99f89; }
+.restore-track { width: min(480px, 76%); height: 3px; margin: 30px auto; background: #211b13; overflow: hidden; }.restore-track span { display: block; width: 0; height: 100%; background: #d2a355; box-shadow: 0 0 15px #d2a355; }.browser-launch.show .restore-track span { width: 100%; transition: width 1.05s ease-out; }
+@media (max-width: 600px) { .prologue-shell { padding: 16px; }.mail-meta, .mail-copy { padding-left: 20px; padding-right: 20px; } #openArchive { margin-left: 20px; }.mail-meta b { display: block; width: auto; }.browser-frame { min-height: 310px; } }
