@@ -126,11 +126,13 @@
 
   // 第三章：瑶池四时、旧物堆及织缘师留下的记忆线。
   function chapterThree() {
-    const yaochi = document.getElementById("yaochi"); if (!yaochi) return;
-    const frame = yaochi.parentElement; frame.style.position = "relative";
+    const yaochi = document.querySelector("#tower canvas#yaochi");
+    const scene = document.querySelector("section#yaochi");
+    if (!yaochi || !scene) return;
+    const frame = scene; frame.style.position = "relative";
     const seasons = document.createElement("div"); seasons.className = "arg-season";
     seasons.innerHTML = `<button data-s="0" title=""></button><button data-s="1" title=""></button><button data-s="2" title=""></button><button data-s="3" title=""></button>`;
-    const readout = document.createElement("div"); readout.className = "arg-season-readout"; appendAfter(yaochi, seasons); appendAfter(seasons, readout);
+    const readout = document.createElement("div"); readout.className = "arg-season-readout"; frame.append(seasons, readout);
     const notes = ["", "", "", ""];
     const texts = ["青花在枯枝上停了一息。", "两枚纸人背对着背，仍写着五行与婉儿。", "叶脉里只有一行数：0917。", "冰层下有人写：等到冰融雪化时，便是重逢日。"];
     let current = 0, longTimer;
