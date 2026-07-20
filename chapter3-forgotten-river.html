@@ -1,0 +1,785 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>忘川渡 · 昆仑篇</title>
+  <script src="js/main.js" defer></script>
+  <style>
+    /*
+      纸人煞 第三章《忘川渡·昆仑篇》
+      拓展第四章时优先改：
+      - FLAGS：隐藏结局与跳谜开关
+      - PUZZLES：谜题答案
+      - state：分支状态
+      - endings：结局文本
+    */
+    :root {
+      --deep: #061011;
+      --teal: #0d2b2e;
+      --jade: #8ecfbd;
+      --jade-bright: #c9fff0;
+      --paper: #c8b06b;
+      --stone: #3b332d;
+      --ash: #d8d8d0;
+      --muted: #8d9b95;
+      --red: #9d1c19;
+      --gold: #b99a55;
+      --panel: rgba(7, 15, 15, .92);
+      --font-song: "SimSun", "宋体", serif;
+      --font-ritual: "STXingkai", "华文行楷", "KaiTi", "楷体", serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ash);
+      font-family: var(--font-song);
+      background:
+        radial-gradient(circle at 70% 0, rgba(142,207,189,.18), transparent 30%),
+        radial-gradient(circle at 20% 15%, rgba(157,28,25,.14), transparent 26%),
+        linear-gradient(180deg, #071315, #030606 70%);
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(90deg, rgba(201,255,240,.035) 0 1px, transparent 1px 13px),
+        radial-gradient(circle at 50% 100%, rgba(142,207,189,.12), transparent 38%);
+      z-index: 0;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .app { position: relative; z-index: 1; width: min(1480px, calc(100vw - 24px)); margin: 0 auto; padding: 16px 0 44px; }
+    .header {
+      border: 1px solid rgba(142,207,189,.62);
+      background:
+        linear-gradient(90deg, rgba(9,31,33,.96) 0 42%, rgba(4,9,9,.56)),
+        url("images/chapter3-forgotten-river.png") center / cover;
+      padding: 18px;
+      box-shadow: inset 0 0 38px rgba(0,0,0,.5), 0 0 28px rgba(0,0,0,.42);
+    }
+    h1 { margin: 0; font-family: var(--font-ritual); font-size: clamp(2.4rem, 7vw, 5rem); color: var(--jade-bright); text-shadow: 0 0 18px rgba(142,207,189,.44); }
+    .subtitle { color: var(--muted); margin: 4px 0 0; }
+    .prologue {
+      margin-top: 12px;
+      border: 1px dashed rgba(185,154,85,.55);
+      padding: 12px 14px;
+      background: rgba(0,0,0,.22);
+      line-height: 1.85;
+    }
+    .layout { display: grid; grid-template-columns: 220px minmax(0, 1fr) 300px; gap: 14px; margin-top: 14px; }
+    .nav, .panel, .side {
+      border: 1px solid rgba(142,207,189,.48);
+      background: var(--panel);
+      box-shadow: inset 0 0 24px rgba(0,0,0,.35);
+    }
+    .nav, .side { align-self: start; position: sticky; top: 10px; padding: 12px; }
+    .nav button {
+      width: 100%;
+      margin-bottom: 8px;
+      min-height: 46px;
+      text-align: left;
+      color: var(--ash);
+      border: 1px solid rgba(142,207,189,.35);
+      background: #071111;
+      padding: 8px 10px;
+    }
+    .nav button.active, .nav button:hover { color: var(--jade-bright); border-color: var(--jade); background: #0d2527; }
+    .panel { display: none; min-height: 760px; padding: clamp(16px, 3vw, 28px); }
+    .panel.active { display: block; animation: inkIn .35s ease both; }
+    h2 { margin: 0 0 14px; color: var(--jade-bright); font-family: var(--font-ritual); font-size: clamp(1.8rem, 4vw, 3rem); }
+    h3 { color: var(--paper); }
+    p { line-height: 1.85; }
+    .note { color: var(--muted); font-size: .96rem; }
+    .warn { color: #ff6b5d; }
+    .jade-btn, .red-btn {
+      border: 1px solid var(--jade);
+      color: var(--jade-bright);
+      background: linear-gradient(180deg, #174448, #071112);
+      padding: 9px 14px;
+      margin: 4px;
+    }
+    .red-btn { border-color: var(--red); color: #ffd4cc; background: linear-gradient(180deg, #5a1715, #140505); }
+    .tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+    .tools input {
+      min-height: 42px;
+      min-width: min(100%, 260px);
+      border: 1px solid rgba(142,207,189,.45);
+      color: var(--ash);
+      background: #020505;
+      padding: 8px 10px;
+    }
+    .records { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+    .soul {
+      position: relative;
+      min-height: 150px;
+      border: 1px solid rgba(142,207,189,.42);
+      background: #091314;
+      padding: 12px;
+      overflow: hidden;
+    }
+    .soul h3 { margin: 0 0 8px; }
+    .smudge {
+      position: absolute;
+      inset: 38px 10px 10px;
+      display: grid;
+      place-items: center;
+      color: transparent;
+      background: radial-gradient(circle, #111 0 54%, #020202 55%);
+      opacity: .96;
+      user-select: none;
+      transition: opacity .25s;
+    }
+    .smudge.clear { opacity: 0; pointer-events: none; }
+    .sansheng {
+      height: 520px;
+      overflow-y: auto;
+      padding: 20px;
+      color: #ddd2c2;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(255,255,255,.08), transparent 24%),
+        repeating-linear-gradient(115deg, rgba(255,255,255,.035) 0 2px, transparent 2px 12px),
+        var(--stone);
+      border: 8px double #1b1511;
+    }
+    .stone-text { font-family: var(--font-ritual); color: #e7d8c0; font-size: 1.4rem; text-shadow: 0 0 8px rgba(0,0,0,.6); }
+    .hidden-shard { display: inline-block; margin-top: 560px; color: var(--jade-bright); cursor: pointer; font-size: 12px; }
+    .seal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+    .seal-card {
+      border: 1px solid rgba(185,154,85,.55);
+      background: #0b1010;
+      padding: 12px;
+      min-height: 210px;
+    }
+    .seal-card.unlocked { border-color: var(--jade); box-shadow: 0 0 16px rgba(142,207,189,.18); }
+    .moon { display: inline-grid; place-items: center; width: 48px; aspect-ratio: 1; border-radius: 50%; color: #111; background: #d8d8d0; position: relative; }
+    .moon:hover::after {
+      content: "月宫图：三足蟾伏桂下。";
+      position: absolute; left: 56px; top: 0; width: 210px; color: var(--jade-bright); background: #000; border: 1px solid var(--jade); padding: 8px; z-index: 3;
+    }
+    canvas { display:block; width:100%; max-width: 100%; border: 1px solid rgba(142,207,189,.55); background: #071111; box-shadow: inset 0 0 36px rgba(0,0,0,.55), 0 12px 24px rgba(0,0,0,.2); }
+    .shadow-stage {
+      position: relative;
+      height: 260px;
+      border: 1px solid rgba(185,154,85,.55);
+      background: linear-gradient(180deg, #1f271f, #070908);
+      overflow: hidden;
+    }
+    .shadow-man {
+      position: absolute; left: 18%; bottom: 30px; width: 90px; height: 170px;
+      background: #0b0505; clip-path: polygon(50% 0, 78% 18%, 64% 100%, 36% 100%, 22% 18%);
+      animation: stepToPool 6s linear infinite;
+    }
+    .pool { position: absolute; right: 10%; bottom: 20px; width: 230px; height: 72px; border-radius: 50%; background: radial-gradient(circle, rgba(142,207,189,.8), rgba(142,207,189,.12)); }
+    .jade-pendant {
+      position: absolute; left: 38%; bottom: 112px; width: 18px; aspect-ratio: 1; border-radius: 50%; background: var(--jade); opacity: 0; cursor: pointer;
+    }
+    .jade-pendant.visible { opacity: 1; box-shadow: 0 0 16px var(--jade); }
+    .shadow-stage { background: linear-gradient(90deg, rgba(3,10,10,.46), rgba(3,10,10,.12)), url("images/chapter3-huaxian-pool.png") center / cover; box-shadow: inset 0 0 52px rgba(0,0,0,.62); }
+    .shadow-stage .shadow-man, .shadow-stage .pool { display: none; }
+    .shadow-stage .jade-pendant { left: 73%; bottom: 22%; width: 32px; background: radial-gradient(circle at 35% 30%, #e7fff7, #72d1bf 42%, #1c675d 62%); border: 1px solid #c9fff0; box-shadow: 0 0 20px rgba(142,207,189,.1); }
+    .shadow-stage .jade-pendant.visible { box-shadow: 0 0 30px rgba(142,207,189,.92), 0 0 68px rgba(142,207,189,.38); animation: pendantPulse 1.8s ease-in-out infinite; }
+    .corridor { display: grid; grid-template-columns: repeat(5, minmax(70px, 1fr)); gap: 10px; }
+    .shard { min-height: 82px; border: 1px dashed var(--gold); background: #101010; color: var(--paper); }
+    .shard.collected { background: #1c2925; color: var(--jade-bright); border-color: var(--jade); }
+    .kunlun-scene {
+      position: relative;
+      min-height: 500px;
+      overflow: hidden;
+      border: 1px solid rgba(142,207,189,.55);
+      background-position: center;
+      background-size: cover;
+      color: #e8fff6;
+      padding: 20px;
+      box-shadow: inset 0 0 72px rgba(0,0,0,.68), 0 14px 28px rgba(0,0,0,.24);
+    }
+    .kunlun-scene::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(2,10,10,.16), transparent 34%, rgba(2,8,9,.6) 100%);
+    }
+    .kunlun-scene > p { max-width: 760px; padding: 10px 12px; background: rgba(2,12,12,.48); border-left: 2px solid rgba(201,255,240,.68); text-shadow: 0 2px 5px rgba(0,0,0,.9); }
+    #yaochi .kunlun-scene { background-image: url("images/chapter3-yaochi-ruins.png"); }
+    #kunlun .kunlun-scene { background-image: url("images/chapter3-kunlun-xu.png"); }
+    .mountain, .tree-svg { display: none; }
+    .ending-box { margin-top: 14px; border: 1px solid var(--red); background: #100606; color: var(--ash); padding: 16px; white-space: pre-wrap; line-height: 1.9; }
+    .ending-cast { display:block; width:min(100%,900px); margin:18px auto 0; border:1px solid rgba(142,207,189,.58); box-shadow:0 0 28px rgba(142,207,189,.16); }
+    .side h3 { margin: 0 0 10px; color: var(--paper); }
+    .status { list-style: none; padding: 0; margin: 0 0 14px; }
+    .status li { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px dashed rgba(142,207,189,.24); }
+    .ok { color: var(--jade-bright); } .bad { color: #ff6b5d; }
+    .white-secret { color: white; background: white; user-select: text; }
+    .white-secret::selection { color: var(--red); background: #fff; }
+    .branch-box {
+      margin-top: 12px;
+      border: 1px solid rgba(185,154,85,.55);
+      background: rgba(0,0,0,.26);
+      padding: 12px;
+    }
+    .branch-box .tools { display: none; }
+    .branch-box.auto-loaded .tools { display: none; }
+    .branch-box.auto-loaded { border-color: rgba(142,207,189,.65); }
+    .console {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 20;
+      width: min(520px, calc(100vw - 32px));
+      border: 1px solid var(--jade);
+      background: #020505;
+      padding: 12px;
+      box-shadow: 0 0 30px rgba(142,207,189,.24);
+      display: none;
+    }
+    .console.visible { display: block; }
+    .moon-board, .weakwater, .seedbox, .umbrella-box {
+      border: 1px solid rgba(142,207,189,.45);
+      background: #081112;
+      padding: 12px;
+      margin: 12px 0;
+    }
+    .moon-icons { display: grid; grid-template-columns: repeat(4, minmax(70px, 1fr)); gap: 10px; }
+    .moon-click { min-height: 64px; border: 1px solid var(--gold); background: #14110b; color: var(--paper); }
+    .moon-click.done { background: #19332e; color: var(--jade-bright); }
+    .umbrella-box {
+      position: relative;
+      overflow: hidden;
+      padding: 18px 18px 14px;
+      background:
+        linear-gradient(90deg, rgba(142,207,189,.06) 1px, transparent 1px) 0 0 / 34px 34px,
+        linear-gradient(rgba(142,207,189,.04) 1px, transparent 1px) 0 0 / 34px 34px,
+        radial-gradient(circle at 50% 8%, rgba(201,255,240,.1), transparent 36%),
+        #071010;
+    }
+    .umbrella-box::before {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      pointer-events: none;
+      border: 1px solid rgba(185,154,85,.24);
+      box-shadow: inset 0 0 44px rgba(0,0,0,.38);
+    }
+    .umbrella-box > * { position: relative; z-index: 1; }
+    .umbrella {
+      --angle: 0deg;
+      position: relative;
+      width: min(100%, 350px);
+      height: 282px;
+      margin: 6px auto 4px;
+      isolation: isolate;
+      filter: drop-shadow(0 16px 18px rgba(0,0,0,.56));
+    }
+    .umbrella-canopy,
+    .umbrella-ribs {
+      position: absolute;
+      left: 50%;
+      top: 12px;
+      width: 328px;
+      height: 194px;
+      translate: -50% 0;
+      transform: rotate(calc(var(--angle) * .09));
+      transform-origin: 50% 86%;
+      clip-path: polygon(50% 0, 58% 4%, 73% 13%, 88% 30%, 100% 58%, 96% 76%, 85% 82%, 69% 84%, 50% 88%, 31% 84%, 15% 82%, 4% 76%, 0 58%, 12% 30%, 27% 13%, 42% 4%);
+      transition: transform .18s ease-out, filter .28s ease;
+    }
+    .umbrella-canopy {
+      z-index: 2;
+      overflow: hidden;
+      border: 1px solid rgba(240,214,144,.66);
+      background:
+        radial-gradient(ellipse at 50% 89%, rgba(255,240,187,.48) 0 2%, transparent 2.5%),
+        repeating-linear-gradient(92deg, rgba(255,243,196,.1) 0 1px, transparent 1px 7px),
+        linear-gradient(118deg, transparent 0 38%, rgba(145,29,24,.78) 38.4% 40.6%, transparent 41% 100%),
+        linear-gradient(63deg, transparent 0 57%, rgba(145,29,24,.74) 57.5% 60%, transparent 60.5% 100%),
+        radial-gradient(ellipse at 50% 105%, #e4c674 0 36%, #b79043 66%, #74502c 100%);
+      box-shadow: inset 0 -18px 28px rgba(58,35,15,.32), inset 0 0 18px rgba(255,238,177,.13), 0 2px 0 rgba(247,222,151,.2);
+    }
+    .umbrella-canopy::after {
+      content: "";
+      position: absolute;
+      left: 9%;
+      right: 9%;
+      bottom: 20px;
+      height: 16px;
+      border-bottom: 2px solid rgba(74,43,23,.68);
+      border-radius: 50%;
+      box-shadow: 0 4px 0 rgba(255,238,181,.12);
+    }
+    .umbrella-ribs {
+      z-index: 3;
+      pointer-events: none;
+      background:
+        repeating-conic-gradient(from 270deg at 50% 88%, rgba(68,43,24,.77) 0 1.1deg, transparent 1.2deg 14deg),
+        radial-gradient(ellipse at 50% 88%, transparent 0 4px, rgba(80,48,22,.76) 4.5px 6px, transparent 6.5px);
+      opacity: .78;
+      mix-blend-mode: multiply;
+    }
+    .umbrella-cap {
+      position: absolute;
+      z-index: 5;
+      left: 50%;
+      top: 169px;
+      width: 20px;
+      height: 20px;
+      translate: -50% -50%;
+      border: 2px solid #6b431f;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 28%, #ffe49a, #b1843c 48%, #513118 53%);
+      box-shadow: 0 0 12px rgba(236,202,118,.4);
+    }
+    .umbrella-shadow {
+      position: absolute;
+      z-index: 1;
+      left: 50%;
+      top: 194px;
+      width: 272px;
+      height: 44px;
+      translate: -50% 0;
+      border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(0,0,0,.58) 0 34%, rgba(13,58,56,.24) 46%, transparent 72%);
+      filter: blur(5px);
+      opacity: .9;
+      transition: opacity .25s ease, background .25s ease;
+    }
+    .umbrella::after {
+      content: "";
+      position: absolute;
+      z-index: 4;
+      left: 50%;
+      top: 176px;
+      width: 11px;
+      height: 86px;
+      translate: -50% 0;
+      border: 1px solid #4c2f18;
+      border-radius: 0 0 9px 9px;
+      background: linear-gradient(90deg, #5a371b, #d6ac5c 45%, #75491f 55%, #301e12);
+      box-shadow: 0 8px 14px rgba(0,0,0,.36);
+    }
+    .umbrella[data-revealed="true"] .umbrella-canopy { filter: brightness(1.18) saturate(.85); }
+    .umbrella[data-revealed="true"] .umbrella-shadow {
+      opacity: 1;
+      background: radial-gradient(ellipse, rgba(142,207,189,.64) 0 15%, rgba(0,0,0,.55) 37%, transparent 73%);
+    }
+    #umbrellaAngle {
+      accent-color: var(--jade);
+      min-width: min(300px, 56vw);
+    }
+    @media (max-width: 520px) {
+      .umbrella { scale: .82; margin: -18px auto -12px; }
+      #umbrellaAngle { min-width: 100%; }
+    }
+    .arg-tiny {
+      display: inline-block;
+      font-size: 10px;
+      color: rgba(142,207,189,.52);
+      cursor: pointer;
+    }
+    @keyframes inkIn { from { opacity: 0; filter: blur(8px); } to { opacity: 1; filter: blur(0); } }
+    @keyframes pendantPulse { 0%,100% { transform: scale(.88); opacity:.68; } 50% { transform: scale(1.12); opacity:1; } }
+    @keyframes stepToPool { 0%,60% { transform: translateX(0); } 85%,100% { transform: translateX(410px) rotate(12deg); opacity: .7; } }
+    .umbrella {
+      width: min(100%, 440px);
+      height: 340px;
+      margin: -4px auto -10px;
+      background: url("images/chapter3-oil-paper-umbrella.png") center / contain no-repeat;
+      transform: rotate(var(--tilt, 0deg));
+      transform-origin: 50% 58%;
+      transition: transform .22s ease-out, filter .25s ease;
+    }
+    .umbrella-canopy, .umbrella-ribs, .umbrella-cap { display: none; }
+    .umbrella::after { display: none; }
+    .umbrella-shadow { top: 278px; width: 236px; opacity: .72; }
+    .umbrella[data-revealed="true"] { filter: drop-shadow(0 0 18px rgba(214,183,93,.5)) drop-shadow(0 17px 18px rgba(0,0,0,.56)); }
+    @media (max-width: 1000px) { .layout { grid-template-columns: 1fr; } .nav, .side { position: static; } }
+  </style>
+</head>
+<body>
+  <!-- 三生石恢复记录残缺，完整玉牒须在旧物档案补卷中比对。 -->
+  <div class="app">
+    <header class="header">
+      <h1>忘川渡 · 昆仑篇</h1>
+      <p class="subtitle">纸人煞第三章 / 忘川渡口管理界面 / 阴司子系统已废弃</p>
+      <section class="prologue">
+        三个月后，陆斩的守桥密信在屏幕上自行展开：忘川渡少了七十九个残魂，三生石却多出苏婉的续缘刻字。信末没有署名，只有一枚被水泡皱的桃核印。第二章留下的判词会在下方归档中补全它从何而来；此刻，你只知道有人正用残魂喂养昆仑的封印。
+      </section>
+      <section class="branch-box">
+        <b id="branchTitle">前作分支接入：</b>你最终是如何了结陈家债的？
+        <div class="tools">
+          <button class="jade-btn" data-branch="workshop">我继承了他的工坊</button>
+          <button class="jade-btn" data-branch="abolish">我废除了契约</button>
+          <button class="jade-btn" data-branch="pact">我与判官达成了新协议</button>
+          <button class="jade-btn" data-branch="free">我让所有人都自由了</button>
+        </div>
+        <p id="branchResult" class="note">未接入前作分支时，系统将按“阴司债余波”默认处理。</p>
+      </section>
+    </header>
+
+    <main class="layout">
+      <nav class="nav">
+        <button class="active" data-panel="monitor">壹 · 轮回井监控台</button>
+        <button data-panel="stone">贰 · 三生石刻录</button>
+        <button data-panel="tower">叁 · 九重封印塔</button>
+        <button data-panel="corridor">肆 · 旧伞铺回廊</button>
+        <button data-panel="yaochi">伍 · 瑶池废墟</button>
+        <button data-panel="kunlun">陆 · 昆仑墟</button>
+      </nav>
+
+      <section class="panel active" id="monitor">
+        <h2>轮回井监控台</h2>
+        <p>七十九个残魂无故消失。拖动每张卡片上的墨污覆盖层，能看见部分真实身份。编号 001、008、079 与昆仑神话直接相关。</p>
+        <div class="prologue"><b>异常日志：</b>三次昆仑能量波动分别对应“代偿工坊重启”“血契废除”“役鬼群魂释放”。无论第二章走向哪条分支，蟠桃核都在同一刻得到养分。</div>
+        <div class="records">
+          <article class="soul"><h3>残魂 001</h3><p>阳世职业：伞铺掌柜。姓名疑似“老何”。</p><p class="note">记忆：玉山、枯树、青色玉佩。</p><div class="smudge" data-id="001">拖动擦拭</div></article>
+          <article class="soul"><h3>残魂 008</h3><p>生前曾在戏班掌灯。</p><p class="note">记忆：蟠桃宴缺一席，何仙姑因病未至。</p><div class="smudge" data-id="008">拖动擦拭</div></article>
+          <article class="soul"><h3>残魂 037</h3><p>来自第二章释放役鬼群。</p><p class="note">它说忘川水下有红线。</p><div class="smudge" data-id="037">拖动擦拭</div></article>
+          <article class="soul"><h3>残魂 079</h3><p>无名氏。</p><p class="note">最后记录：我看见蟠桃核裂开，里面不是种子，是封印。</p><div class="smudge" data-id="079">拖动擦拭</div></article>
+          <article class="soul"><h3>绣娘阿蘅</h3><p>曾为青绡第一世绣过嫁衣。</p><p class="note">民谣反复唱：九月十七，桃核入土。</p><div class="smudge" data-id="aheng">拖动擦拭</div></article>
+          <article class="soul"><h3>更夫老郭</h3><p data-sound="天干物燥，小心情缚">他喊的不是“小心火烛”。</p><p class="note">查看 data-sound 可见真实打更词。</p><div class="smudge" data-id="guo">拖动擦拭</div></article>
+        </div>
+      </section>
+
+      <section class="panel" id="stone">
+        <h2>三生石刻录界面</h2>
+        <div class="sansheng" id="stoneScroll">
+          <p class="stone-text">“苏婉，两世姻缘，皆为断线。第三世，需以执念人魂为引，方可续接。”</p>
+          <p>石面潮湿，像有人刚把名字刻上去。苏婉的残影在倒影里说：告诉他，别再等了。我宁愿消散，也不想成为谁的养料。</p>
+          <p>搜索姓名，可调取轮回影。搜索“青绡”需要昆仑玉牒权限。旧物档案的 <a href="secret/recovered-ledger.html#C-012">C-012 玉牌补卷</a> 可能保存了磨损背面的读法。</p>
+          <span class="hidden-shard" id="bottomShard">碎片 ⑤：滚动到底的人才看得见</span>
+        </div>
+        <div class="tools"><input id="stoneSearch" placeholder="搜索：苏婉 / 陈五行 / 陆斩 / 青绡 / 西王母"><button class="jade-btn" id="doSearch">刻录查询</button><input id="jadeToken" placeholder="昆仑玉牒密码"></div>
+        <div class="tools"><button class="jade-btn" id="recordTouch">记录苏婉触摸</button><span class="arg-tiny" id="stoneDust">碎片：陈五行说，对不起，让你为难了。</span></div>
+        <p id="stoneResult" class="prologue"></p>
+      </section>
+
+      <section class="panel" id="tower">
+        <h2>九重封印塔</h2>
+        <p>织缘师的记忆被封成九层。每解一层，红线都会褪去一点血色，露出青绡的本相。</p>
+        <div class="moon-board">
+          <h3>第二封印 · 月桂迷踪</h3>
+          <!-- 提示：玉兔捣药为谁？蟾蜍吞月为何？桂树千年不倒，吴刚之斧不落。 -->
+          <p>月宫壁画被擦掉了题序，只剩四句：药杵先响，月影随沉；桂香不落，斧声最后。</p>
+          <div class="moon-icons" id="moonIcons"></div>
+        </div>
+        <div class="weakwater">
+          <h3>第四封印 · 弱水之誓</h3>
+          <canvas id="weakCanvas" width="620" height="160"></canvas>
+          <div class="tools"><span>定风珠</span><input type="range" id="windPearl" min="0" max="100" value="0"><input id="weakAnswer" placeholder="输入诗中暗数"><button class="jade-btn" id="answerWeak">提交第四封印</button></div>
+        </div>
+        <div class="weakwater">
+          <h3>第六封印 · 不死药之争</h3>
+          <p>《淮南子》曰姮娥窃药奔月；昆仑玉牒残片则称后羿为救妻主动献药。哪一段更接近封印真相？</p>
+          <!-- 凤纹印章 SVG 注释：<svg data-seal="西王母凤纹印"></svg> -->
+          <button class="jade-btn" id="chooseHuainan">相信淮南子</button><button class="jade-btn" id="chooseJadeBook">相信昆仑玉牒</button>
+        </div>
+        <div class="seal-grid" id="sealGrid"></div>
+        <h3>第五封印：瑶池宴显影</h3>
+        <canvas id="yaochi" width="620" height="260"></canvas>
+        <div class="tools"><span>清洗显影</span><input type="range" id="washSlider" min="0" max="100" value="0"><input id="fifthAnswer" placeholder="缺席者是谁？"><button class="jade-btn" id="answerFifth">提交第五封印</button></div>
+        <h3>第七封印：化仙池</h3>
+        <div class="shadow-stage"><div class="shadow-man"></div><div class="pool"></div><button class="jade-pendant" id="pendant" title="青色玉佩"></button></div>
+        <div class="tools"><input id="seventhAnswer" placeholder="他叫什么名字？"><button class="jade-btn" id="answerSeventh">提交第七封印</button><button class="jade-btn" id="tellLuzhan">告诉陆斩真相</button></div>
+        <div class="seedbox">
+          <h3>第八封印 · 蟠桃之心</h3>
+          <canvas id="seedCanvas" width="420" height="220"></canvas>
+          <div class="tools"><button class="jade-btn" id="waterSeed">灌溉</button><button class="red-btn" id="recallSeed">收回</button><span id="seedText">残魂能量：0 / 5</span></div>
+        </div>
+        <div class="weakwater">
+          <h3>第九封印 · 西王母之问</h3>
+          <p>前八层记忆齐备后，封印不再索要答案，只问你是否愿意承担看见真相后的后果。</p>
+          <button class="jade-btn" id="answerNinth">以本心解封</button>
+        </div>
+      </section>
+
+      <section class="panel" id="corridor">
+        <h2>旧伞铺记忆回廊</h2>
+        <p>收集五片伞铺残片，恢复老何完整记忆。若没有这段记忆，最终很难识破蟠桃核中的陷阱。</p>
+        <div class="corridor" id="shards"></div>
+        <div class="umbrella-box">
+          <h3>油纸伞影</h3>
+          <div class="umbrella" id="umbrella" aria-label="可旋转的油纸伞影">
+            <span class="umbrella-shadow" aria-hidden="true"></span>
+            <span class="umbrella-canopy" aria-hidden="true"></span>
+            <span class="umbrella-ribs" aria-hidden="true"></span>
+            <span class="umbrella-cap" aria-hidden="true"></span>
+          </div>
+          <div class="tools"><span>旋转伞面</span><input type="range" id="umbrellaAngle" min="0" max="360" value="0"><button class="jade-btn" id="rubMural">涂抹壁画</button></div>
+          <p id="umbrellaResult" class="note">伞面会随角度改变，某个角度会投出不属于本章的字。</p>
+        </div>
+        <div class="prologue" id="heMemory">残片不足。老何的伞铺还在雨里。</div>
+      </section>
+
+      <section class="panel" id="yaochi">
+        <h2>瑶池废墟</h2>
+        <p>集齐三片昆仑玉屑后，蟠桃园废墟会显形。枯井里压着青绡的玉簪，玉簪上刻着她被剥夺的神职。</p>
+        <div class="kunlun-scene"><div class="mountain"></div><p style="position:relative;z-index:1;">枯井边有三点玉光：渡口一片、三生石一片、伞铺回廊一片。集齐后可打捞玉簪。</p></div>
+        <div class="tools"><button class="jade-btn" id="collectJadeDust">收拢昆仑玉屑</button><button class="jade-btn" id="fishHairpin">打捞青绡玉簪</button><button class="red-btn" id="breakWithHairpin">以玉簪击核</button><button class="jade-btn" id="shineLuzhan">照向陆斩</button></div>
+        <p id="yaochiResult" class="prologue">瑶池废墟尚未承认你。</p>
+      </section>
+
+      <section class="panel" id="kunlun">
+        <h2>昆仑墟</h2>
+        <p>九重封印全开后，三生石裂开，露出玉山云海。若入口尚未开放，此处只是一片雾。</p>
+        <div class="kunlun-scene" id="kunlunScene">
+          <div class="mountain"></div>
+          <svg class="tree-svg" viewBox="0 0 300 300" aria-label="枯萎蟠桃树">
+            <path d="M150 270 C140 210 155 150 146 92" stroke="#4c2d21" stroke-width="16" fill="none" stroke-linecap="round"/>
+            <path d="M150 160 C95 130 72 88 44 48" stroke="#4c2d21" stroke-width="10" fill="none" stroke-linecap="round"/>
+            <path d="M154 142 C205 104 224 76 254 38" stroke="#4c2d21" stroke-width="10" fill="none" stroke-linecap="round"/>
+            <ellipse cx="78" cy="76" rx="28" ry="12" fill="#8ecfbd"/>
+            <ellipse cx="226" cy="70" rx="28" ry="12" fill="#8ecfbd"/>
+          </svg>
+          <p style="position:relative;z-index:1;">西王母残识：吾已观望千年。蟠桃核在此。毁之、植之、共守之，或承其印。选择不问善恶，只问代价。</p>
+        </div>
+        <div class="tools" id="finalChoices"><button class="jade-btn" id="resolveKunlun">归档昆仑判词</button><button class="jade-btn" id="finalA" hidden></button><button class="jade-btn" id="finalB" hidden></button><button class="jade-btn" id="finalC" hidden></button><button class="red-btn" id="finalD" hidden></button><button class="red-btn" id="finalE" hidden></button><button class="jade-btn" id="finalF" hidden></button></div>
+        <div class="ending-box" id="endingBox">昆仑雾未散。</div>
+      </section>
+
+      <aside class="side">
+        <h3>渡口状态</h3>
+        <ul class="status" id="status"></ul>
+        <h3>陆斩批注</h3>
+        <p id="luzhanNote" class="warn">陆斩：我已不是判官。权限很少，麻烦很多。</p>
+        <p class="white-secret">若她问起化仙池的水温，告诉她：不冷。</p>
+        <h3>织缘师</h3>
+        <p id="weaverLine">红线在系统边缘蠕动。她还不愿说自己叫青绡。</p>
+      </aside>
+    </main>
+  </div>
+
+  <div class="console" id="argConsole">
+    <b>忘川渡隐藏控制台</b>
+    <div class="tools"><input id="consoleInput" placeholder="输入指令"><button class="jade-btn" id="consoleRun">执行</button></div>
+    <pre id="consoleOutput">Ctrl+Shift+K 已打开控制台。</pre>
+  </div>
+
+  <script>
+    const FLAGS = { enableHiddenD: true, enableEndingE: true, enableEndingF: true, allowJadeTokenSkip: true, enableChapter4Hook: true };
+    const PUZZLES = { peachCycle: "9000", moonToadFeet: "3", yaochiMissing: "何仙姑", generalName: "羿清", jadeToken: "QINGXIAO" };
+    const state = {
+      souls: new Set(), shards: new Set(), seals: new Set(), heComplete: false,
+      luIdentity: false, toldLuzhan: false, kunlunOpen: false, ruleUnfair: 0,
+      jadeToken: false, pendantLoops: 0, pendantFound: false, waxWarning: false,
+      branch: "", jadeDust: 0, hairpin: false, hairpinRead: false, hairpinBroken: false,
+      suwanTouch: false, helpedDoubt: false, allSoulMemory: false, seedWater: 0, moonStep: 0,
+      chapter4Scale: false
+    };
+    const panels = document.querySelectorAll(".panel");
+    const navs = document.querySelectorAll(".nav button");
+    const statusEl = document.getElementById("status");
+    const note = document.getElementById("luzhanNote");
+    const weaver = document.getElementById("weaverLine");
+
+    function switchPanel(id){ panels.forEach(p=>p.classList.toggle("active",p.id===id)); navs.forEach(b=>b.classList.toggle("active",b.dataset.panel===id)); jadeDust(); }
+    navs.forEach(b=>b.addEventListener("click",()=>switchPanel(b.dataset.panel)));
+    function setNote(t){ note.textContent = "陆斩：" + t; }
+    function update(){
+      statusEl.innerHTML = `
+        <li><span>残魂擦拭</span><b>${state.souls.size}/4</b></li>
+        <li><span>伞铺残片</span><b>${state.shards.size}/5</b></li>
+        <li><span>九重封印</span><b>${state.seals.size}/9</b></li>
+        <li><span>老何记忆</span><b class="${state.heComplete?'ok':'bad'}">${state.heComplete?'完整':'残缺'}</b></li>
+        <li><span>陆斩身份</span><b class="${state.luIdentity?'ok':'bad'}">${state.luIdentity?'羿清':'未知'}</b></li>
+        <li><span>昆仑墟</span><b class="${state.kunlunOpen?'ok':'bad'}">${state.kunlunOpen?'已开启':'雾锁'}</b></li>`;
+      updateFinalChoices();
+    }
+
+    function updateFinalChoices(){["finalA","finalB","finalC","finalD","finalE","finalF"].forEach(id=>{const button=document.getElementById(id);if(button)button.hidden=true;});}
+
+    const branchNotes={
+      workshop:"陆斩对你更冷淡：新订单的编号里混入了七十九个从未登记的魂号。你身上的纸灰，是它们留下的坐标。",
+      abolish:"陆斩称你为抗辩人：血契烧尽那刻，灰烬里浮出七十九枚忘川水印。债线断了，截流却早在断线前发生。",
+      pact:"陆斩称你为合议人：你接管权限后调出的第一份异常日志，记录时间比你的任命早了九日。有人先一步封存了七十九人的去向。",
+      free:"陆斩沉默很久：你放走的魂里，有些没有抵达轮回井。它们不是逃走，而是在桥下被昆仑玉光截走。"
+    };
+    let explorationEffects={};
+    try { explorationEffects=JSON.parse(localStorage.getItem("zhirensha.explore.effects")||"{}"); } catch { explorationEffects={}; }
+    function setBranch(branch, fromArchive=false){
+      state.branch=branch;
+      const message=branchNotes[branch] || "阴司债的余波已接入忘川渡。";
+      const relic=explorationEffects.judgeFragments ? "判官笔碎片在案卷边缘共鸣，替你标出一条被删去的旧桥记录。" : "";
+      document.getElementById("branchResult").textContent=(fromArchive ? `已读取第二章判词。${message}` : message) + (relic ? ` ${relic}` : "");
+      if(fromArchive){
+        document.querySelector(".branch-box").classList.add("auto-loaded");
+        document.getElementById("branchTitle").textContent="前作判词已归档：";
+      }
+      setNote(message);
+      update();
+    }
+    document.querySelectorAll("[data-branch]").forEach(btn=>btn.addEventListener("click",()=>setBranch(btn.dataset.branch)));
+
+    document.querySelectorAll(".smudge").forEach(s=>{
+      let n=0; s.addEventListener("pointermove",()=>{ n++; if(n>8){ s.classList.add("clear"); state.souls.add(s.dataset.id); if(s.dataset.id==="001"||s.dataset.id==="079") collectShard(s.dataset.id==="001"?1:2); if(s.dataset.id==="008") setNote("编号008的记忆能解第五封印。"); update(); }});
+    });
+
+    document.getElementById("doSearch").addEventListener("click",()=>{
+      const q=document.getElementById("stoneSearch").value.trim();
+      const token=document.getElementById("jadeToken").value.trim();
+      const out=document.getElementById("stoneResult");
+      if(q==="苏婉") out.textContent="苏婉残影：我宁愿消散，也不想让五行成为树上的禁果。若你随后搜索陈五行，并长按 Enter，石面会短暂显出他们今世擦肩。";
+      else if(q==="陈五行") out.textContent="今世投影：江南伞匠少年，手腕有红痣，梦醒时总记得一把红线。碎片③已收集。", collectShard(3);
+      else if(q==="陆斩") out.textContent="守桥阴差。神籍缺页。化仙池记录与其魂纹相合。";
+      else if(q==="青绡"){
+        if(localStorage.getItem("zhirensha.arg.recoveredLedger")!=="1") out.textContent="玉牒背面的磨损字无法校验。先调阅 C-012 补卷。";
+        else if(token===PUZZLES.jadeToken){ state.jadeToken=true; out.textContent="昆仑玉牒通过：瑶池玉女青绡，司姻缘蟠桃，因私摘未熟蟠桃被贬。"; unlockSeal(2); }
+        else out.textContent="界面短暂崩溃：查询此名需昆仑玉牒权限。";
+      } else if(q==="西王母") out.textContent="权限不足。玉牒背面的磨损字或许还在旧物档案补卷。";
+      else out.textContent="三生石无此刻名。";
+      update();
+    });
+
+    let lastSearch="";
+    document.getElementById("stoneSearch").addEventListener("input",e=>lastSearch=e.target.value.trim());
+    document.getElementById("stoneSearch").addEventListener("keydown",e=>{
+      if(e.key==="Enter" && e.repeat && lastSearch==="陈五行"){
+        state.suwanTouch=true;
+        document.getElementById("stoneResult").textContent="无声皮影：苏婉残影走出石面，隔着轮回影轻触陈五行今世的伞柄。一滴墨晕开，像一次没有说出口的道别。";
+        update();
+      }
+    });
+    document.getElementById("recordTouch").onclick=()=>{ if(state.suwanTouch){ setNote("这张无声截图足以证明强行续缘会伤害她。"); } else setNote("尚无可记录画面。"); };
+    document.getElementById("stoneDust").onclick=()=>{ state.jadeDust++; collectShard(2); update(); };
+
+    document.getElementById("bottomShard").addEventListener("click",()=>collectShard(5));
+    function collectShard(n){ state.shards.add(n); renderShards(); if(state.shards.size>=5){ state.heComplete=true; state.waxWarning=true; document.getElementById("heMemory").textContent="老何完整记忆：我看见一座玉山，山上有棵树，树下站着一个人。他说：如果见到青绡，告诉她，蟠桃核里有毒。那人腰间玉佩刻着两个字：羿清。"; } update(); }
+    function renderShards(){ const box=document.getElementById("shards"); box.innerHTML=""; for(let i=1;i<=5;i++){ const b=document.createElement("button"); b.className="shard"+(state.shards.has(i)?" collected":""); b.textContent=state.shards.has(i)?`残片 ${i}`:"空位"; if(i===4) b.onclick=()=>collectShard(4); box.appendChild(b); } }
+
+    const moonOrder=["玉兔","蟾蜍","桂树","斧头"];
+    const moonIcons=document.getElementById("moonIcons");
+    moonOrder.forEach(name=>{ const b=document.createElement("button"); b.className="moon-click"; b.textContent=name; b.onclick=()=>{ if(name===moonOrder[state.moonStep]){ b.classList.add("done"); state.moonStep++; if(state.moonStep===moonOrder.length) unlockSeal(2); } else { state.moonStep=0; document.querySelectorAll(".moon-click").forEach(x=>x.classList.remove("done")); setNote("桂叶落满月宫，顺序重置。"); } }; moonIcons.appendChild(b); });
+
+    const wctx=document.getElementById("weakCanvas").getContext("2d");
+    function drawWeak(still=0){ wctx.clearRect(0,0,620,160); const bg=wctx.createLinearGradient(0,0,0,160); bg.addColorStop(0,"#031011"); bg.addColorStop(1,"#010404"); wctx.fillStyle=bg; wctx.fillRect(0,0,620,160); wctx.save(); wctx.globalAlpha=.32; wctx.strokeStyle="#8ecfbd"; for(let y=34;y<150;y+=18){ wctx.beginPath(); wctx.moveTo(0,y); wctx.bezierCurveTo(140,y+22*(1-still),330,y-20*(1-still),620,y+10); wctx.stroke(); } wctx.restore(); wctx.fillStyle="#8ecfbd"; wctx.font="26px KaiTi, serif"; const chars="三千弱水深，不及卿一颦".split(""); chars.forEach((c,i)=>{ const y=82+Math.sin(i+Date.now()/500)*(28*(1-still)); wctx.fillText(c,40+i*34,y); }); if(still>.9){ wctx.fillStyle="#c9fff0"; wctx.shadowColor="#8ecfbd"; wctx.shadowBlur=12; wctx.fillText("暗数：三与一，合四。",180,132); wctx.shadowBlur=0; } }
+    document.getElementById("windPearl").oninput=e=>drawWeak(e.target.value/100);
+    document.getElementById("answerWeak").onclick=()=>{ const v=document.getElementById("weakAnswer").value.trim(); if(v==="4"||v==="四") unlockSeal(4); else setNote("弱水仍在晃。诗中只取暗数。"); };
+
+    document.getElementById("chooseHuainan").onclick=()=>setNote("疑影笑了：凡书也会错。你丢失一层记忆。");
+    document.getElementById("chooseJadeBook").onclick=()=>{ if(state.hairpinRead||state.jadeToken){ unlockSeal(6); setNote("凤纹印章与玉牒残片相合。不死药是考验，不是恩赐。"); } else setNote("没有玉牒或玉簪铭文佐证，阴司不采信。"); };
+
+    const sealGrid=document.getElementById("sealGrid");
+    const sealPrompts=[
+      ["第一封印：蟠桃数","三千年开花，三千年结果，再三千年成熟。一轮几千年？",PUZZLES.peachCycle],
+      ["第二封印：玉牒","搜索青绡并取得昆仑玉牒权限。","AUTO"],
+      ["第三封印：不死药","羿请不死药于西王母，姮娥奔月后化蟾。月宫图中蟾有几足？",PUZZLES.moonToadFeet],
+      ["第四封印：红线","选择一句立场。","CHOICE"],
+      ["第六封印：忘川","收集任意三枚伞铺残片。","SHARD"],
+      ["第八封印：苏婉","在三生石搜索苏婉。","SUWAN"],
+      ["第九封印：西王母之问","九层将尽，昆仑墟会自行打开。","FINAL"]
+    ];
+    sealPrompts.forEach((s,i)=>{
+      const card=document.createElement("div"); card.className="seal-card"; card.innerHTML=`<h3>${s[0]}</h3><p>${s[1]} ${i===2?'<span class="moon">月</span>':''}</p><input placeholder="答案"><button class="jade-btn">解封</button>`;
+      card.querySelector("button").onclick=()=>answerSeal(i+1,s[2],card);
+      sealGrid.appendChild(card);
+    });
+    function unlockSeal(n){ state.seals.add(n); [...document.querySelectorAll(".seal-card")][n-1]?.classList.add("unlocked"); weaver.textContent=`第 ${n} 层封印松动。红线褪成一点青色。`; if(state.seals.size>=9) openKunlun(); update(); }
+    function answerSeal(n,ans,card){
+      const v=card.querySelector("input").value.trim();
+      if(ans==="AUTO" && state.jadeToken) unlockSeal(n);
+      else if(ans==="CHOICE"){ state.ruleUnfair++; unlockSeal(n); setNote("你说规则本身不公。系统记录了这句话。"); }
+      else if(ans==="SHARD" && state.shards.size>=3) unlockSeal(n);
+      else if(ans==="SUWAN") unlockSeal(n);
+      else if(ans==="FINAL" && state.seals.size>=8) unlockSeal(9);
+      else if(v===ans) unlockSeal(n);
+      else setNote("封印不认这个答案。");
+    }
+
+    const yctx=document.getElementById("yaochi").getContext("2d");
+    function drawYaochi(p=0){ yctx.clearRect(0,0,620,260); const bg=yctx.createLinearGradient(0,0,0,260); bg.addColorStop(0,"#d7c68c"); bg.addColorStop(1,"#8d6c35"); yctx.fillStyle=bg; yctx.fillRect(0,0,620,260); yctx.save(); yctx.globalAlpha=.22; yctx.strokeStyle="#57351a"; for(let x=36;x<620;x+=54){yctx.beginPath();yctx.moveTo(x,26);yctx.lineTo(x+22,232);yctx.stroke();} yctx.restore(); yctx.font="24px KaiTi, serif"; for(let i=0;i<8;i++){ const x=66+i*68; yctx.fillStyle=i===3?`rgba(120,20,18,${.22+p*.68})`:"#57351a"; yctx.beginPath(); yctx.arc(x,86,28,0,Math.PI*2); yctx.fill(); yctx.strokeStyle="rgba(255,230,170,.35)"; yctx.stroke(); yctx.fillStyle=`rgba(120,20,18,${p})`; yctx.fillText(i===3?"何仙姑缺席":"仙",x-22,166); } yctx.fillStyle=`rgba(120,20,18,${p})`; yctx.font="25px KaiTi, serif"; yctx.fillText("纸条：蟠桃会八仙赴宴，缺一席。",118,225); }
+    document.getElementById("washSlider").addEventListener("input",e=>drawYaochi(e.target.value/100));
+    document.getElementById("answerFifth").onclick=()=>{ if(document.getElementById("fifthAnswer").value.trim()===PUZZLES.yaochiMissing) unlockSeal(5); else setNote("瑶池席位仍不完整。"); };
+
+    setInterval(()=>{ state.pendantLoops++; if(state.pendantLoops>=4) document.getElementById("pendant").classList.add("visible"); },6000);
+    document.getElementById("pendant").onclick=()=>{ state.pendantFound=true; state.luIdentity=true; setNote("玉佩刻着青绡。陆斩的魂纹与羿清残页重合。"); collectShard(4); update(); };
+    document.getElementById("answerSeventh").onclick=()=>{ if(document.getElementById("seventhAnswer").value.trim()===PUZZLES.generalName){ state.luIdentity=true; unlockSeal(7); } else setNote("化仙池没有回应这个名字。"); };
+    document.getElementById("tellLuzhan").onclick=()=>{ if(state.luIdentity){ state.toldLuzhan=true; setNote("我想起来了。化仙池的水……不冷。"); } else setNote("你还没有足够证据告诉我是谁。"); update(); };
+
+    const sctx=document.getElementById("seedCanvas").getContext("2d");
+    function drawSeed(){ sctx.clearRect(0,0,420,220); const bg=sctx.createRadialGradient(210,112,10,210,112,220); bg.addColorStop(0,"#132927"); bg.addColorStop(1,"#030707"); sctx.fillStyle=bg; sctx.fillRect(0,0,420,220); sctx.save(); sctx.globalAlpha=.26; sctx.strokeStyle="#8ecfbd"; for(let r=38;r<132;r+=24){sctx.beginPath();sctx.ellipse(210,120,r*1.45,r,0,0,Math.PI*2);sctx.stroke();} sctx.restore(); sctx.fillStyle=state.seedWater===5?"#8ecfbd":state.seedWater>5?"#9d1c19":"#c8b06b"; sctx.shadowColor=sctx.fillStyle; sctx.shadowBlur=14; sctx.beginPath(); sctx.ellipse(210,120,30+state.seedWater*7,46+state.seedWater*3,0,0,Math.PI*2); sctx.fill(); sctx.shadowBlur=0; sctx.strokeStyle="#382313"; sctx.lineWidth=3; sctx.beginPath(); sctx.moveTo(210,76); sctx.bezierCurveTo(185,112,190,145,210,166); sctx.bezierCurveTo(230,145,235,112,210,76); sctx.stroke(); sctx.fillStyle="#d8d8d0"; sctx.font="18px SimSun"; sctx.fillText(`残魂灌溉：${state.seedWater}`,152,40); if(state.seedWater===5){ sctx.fillStyle="#c9fff0"; sctx.fillText("桃核内浮现：羿清说，核里有毒。",75,190); } }
+    document.getElementById("waterSeed").onclick=()=>{ state.seedWater++; document.getElementById("seedText").textContent=`残魂能量：${state.seedWater} / 5`; if(state.seedWater===5) unlockSeal(8); if(state.seedWater>5) setNote("灌溉过度，桃核开始发胀。"); drawSeed(); };
+    document.getElementById("recallSeed").onclick=()=>{ state.seedWater=Math.max(0,state.seedWater-1); document.getElementById("seedText").textContent=`残魂能量：${state.seedWater} / 5`; drawSeed(); };
+    document.getElementById("answerNinth").onclick=()=>{ if(state.seals.size>=8) unlockSeal(9); else setNote("西王母的声音尚隔着八层旧事。先让其余封印归位。"); };
+
+    document.getElementById("umbrellaAngle").oninput=e=>{ const deg=Number(e.target.value); const umbrella=document.getElementById("umbrella"); const revealed=Math.abs(deg-217)<4; umbrella.style.setProperty("--angle",deg+"deg"); umbrella.style.setProperty("--tilt",((deg-180)*.035)+"deg"); umbrella.dataset.revealed=revealed?"true":"false"; if(revealed){ state.chapter4Scale=true; document.getElementById("umbrellaResult").textContent="伞骨投影：第四章：归墟。"; } };
+    document.getElementById("rubMural").onclick=()=>{ state.jadeDust++; document.getElementById("umbrellaResult").textContent="壁画显出玉虚宫山顶，旁边写着：画中缺的不是景，是人。昆仑玉屑 +1。"; update(); };
+
+    document.getElementById("collectJadeDust").onclick=()=>{ if(state.souls.size>=2) state.jadeDust++; if(state.shards.size>=2) state.jadeDust++; if(state.suwanTouch) state.jadeDust++; document.getElementById("yaochiResult").textContent=`昆仑玉屑：${state.jadeDust}/3。`; update(); };
+    document.getElementById("fishHairpin").onclick=()=>{ if(state.jadeDust>=3){ state.hairpin=true; state.hairpinRead=true; document.getElementById("yaochiResult").textContent="你打捞出青绡玉簪。铭文：蟠桃需以自愿之魂为祭，非强取。和平选项已开启。"; } else document.getElementById("yaochiResult").textContent="玉屑不足，枯井无光。"; update(); };
+    document.getElementById("breakWithHairpin").onclick=()=>{ if(state.hairpin){ state.hairpinBroken=true; document.getElementById("yaochiResult").textContent="玉簪击中桃核，核未碎，青绡神职先裂了一线。"; } };
+    document.getElementById("shineLuzhan").onclick=()=>{ if(state.hairpin){ state.luIdentity=true; document.getElementById("yaochiResult").textContent="玉簪照向陆斩，他身后分出金甲神将残影。陆斩与羿清的身份链补全。"; update(); } };
+
+    function openKunlun(){ state.kunlunOpen=true; switchPanel("kunlun"); setNote("昆仑墟开了。我的桥，到这里就断了。"); update(); }
+    function finalText(t){
+      const box=document.getElementById("endingBox");
+      box.textContent=t;
+      const outcome=t.match(/结局([A-F])/);
+      if(!outcome) return;
+      const cards={A:"peach",B:"peach",C:"kunlun",D:"jade",E:"jade",F:"twin"};
+      const priorCards={workshop:"craft",abolish:"abolish",pact:"abolish",free:"free"};
+      const carried=priorCards[state.branch];
+      localStorage.setItem("wuxing.chapter3Outcome",outcome[1]);
+      localStorage.setItem("wuxing.chapter4Cards",JSON.stringify([carried,cards[outcome[1]]].filter(Boolean)));
+      const bridge=document.createElement("p");
+      bridge.className="note";
+      bridge.innerHTML='归墟方向传来一声极轻的龙吟。<a href="chapter4-guixu-zhulong.html" class="jade-btn" style="display:inline-block;margin-left:8px">进入归墟因果录</a>';
+      box.appendChild(bridge);
+      const cast=document.createElement("img");
+      cast.className="ending-cast";
+      cast.src="images/finale-cast.png";
+      cast.alt="调查者与陈五行、苏婉、陆斩、青绡的命运群像";
+      box.appendChild(cast);
+      const echoes={workshop:"你仍记得工坊里那些未署名的纸人。此刻，终于有人为它们补上了归处。",abolish:"血契化灰时断开的那一笔，最终没有成为新的锁链。",pact:"你曾坐过判案桌，因此更清楚一份允许重审的规条有多难得。",free:"你放走的魂没有白走，它们成为昆仑雾里最先亮起的星。"};
+      if(state.branch&&echoes[state.branch]){const echo=document.createElement("p");echo.className="note";echo.textContent=echoes[state.branch];box.appendChild(echo);}
+    }
+    document.getElementById("finalA").onclick=()=> finalText("结局A【蟠桃新生】\n你毁掉蟠桃核。青绡失去力量，却保住魂魄。苏婉与陈五行的因缘线自然断开，各自安好。蟠桃树彻底枯萎，西王母在废墟上种下一颗新种：此树不再结果，只开花。花名忘缘。陆斩恢复神位，守在新树旁，等待青绡的转世。");
+    document.getElementById("finalB").onclick=()=> finalText("结局B【守园人】\n你种下蟠桃核，接替青绡成为新的守园人。你坐在蟠桃树下，看尽凡间因缘聚散。青衣小纸人不知从何处钻来，陪你下棋。第一局她输得很快，因为她总忍不住替相爱的人悔棋。");
+    document.getElementById("finalC").onclick=()=>{ if(state.toldLuzhan && state.heComplete) finalText("结局C【共守昆仑】\n陆斩与青绡相认。她追寻千世的人，原来一直以守桥阴差的样子站在忘川边。两人选择一同守护蟠桃树，让它自己决定未来是否结果。西王母默许，收回惩罚。苏婉残影成为树下第一个自由花灵。你回到阳世，月圆之夜偶尔能看见玉山云海。"); else finalText("昆仑雾未开。此选项需要一段完整的旧记忆，也需要有人知道自己是谁。"); };
+    document.getElementById("finalD").onclick=()=>{ if(FLAGS.enableHiddenD && state.ruleUnfair>0 && !state.heComplete) finalText("结局D【逆天改缘】\n你与织缘师联手对抗西王母残识，将蟠桃核中的封印转移到自己身上。西王母震怒，却无法违逆自愿承印的规则。你被困于蟠桃树中，织缘师、陆斩和所有残魂获得自由。百年后，凡人攀上昆仑，发现一棵开满红花的树，树下有一封写不完的信，署名是你。"); else finalText("玉山不收这份选择。你知道得太多，或还不够偏执。"); };
+    document.getElementById("finalE").onclick=()=>{ if(FLAGS.enableEndingE && state.hairpinBroken) finalText("结局E【玉碎昆仑】\n蟠桃核碎裂，残魂全部释放，但青绡的神职也随之消失，她化为凡人进入轮回，永失仙格。陆斩选择放弃神位，追入轮回陪她。西王母将枯枝插回瑶池：待下一对有情人，自愿灌溉。"); else finalText("玉簪尚未染上裂核之光。"); };
+    document.getElementById("finalF").onclick=()=>{ if(FLAGS.enableEndingF && state.hairpin && state.heComplete && state.suwanTouch && state.souls.size>=6) finalText("结局F【双树并生】\n青绡和西王母达成和解：蟠桃核保留，但不再用于续缘，而是种在忘川渡与昆仑交界处，长成一棵一半枯萎一半盛开的新树。青绡和羿清残识化为树上的两朵花，永不分离，也不再介入他人因果。苏婉和陈五行的因缘线被轻轻解开，化为树下两条红丝带。陆斩回到判官之位，并修改规则：允许有情人在三生石上申请重审因缘。远处，烛龙闭眼，因果树第一次生出岔枝。"); else finalText("双树并生的条件未成。还缺完整残魂记忆、苏婉触摸，或瑶池神职之证。"); };
+
+    const chooseStop=finalA.onclick, chooseGarden=finalB.onclick, chooseTogether=finalC.onclick;
+    finalA.onclick=()=>state.hairpinBroken?finalE.click():chooseStop();
+    finalB.onclick=()=>FLAGS.enableHiddenD&&state.ruleUnfair>0&&!state.heComplete?finalD.click():chooseGarden();
+    finalC.onclick=()=>FLAGS.enableEndingF&&state.hairpin&&state.heComplete&&state.suwanTouch&&state.souls.size>=6?finalF.click():chooseTogether();
+    document.getElementById("resolveKunlun").onclick=()=>{if(FLAGS.enableEndingF&&state.hairpin&&state.heComplete&&state.suwanTouch&&state.souls.size>=6)return finalF.click();if(state.hairpinBroken)return finalE.click();if(FLAGS.enableHiddenD&&state.ruleUnfair>0&&!state.heComplete)return finalD.click();if(state.toldLuzhan&&state.heComplete)return finalC.click();if(state.souls.size>=3)return finalB.click();return finalA.click();};
+
+    window.addEventListener("keydown",e=>{ if(e.ctrlKey && e.shiftKey && e.key.toLowerCase()==="k"){ e.preventDefault(); document.getElementById("argConsole").classList.toggle("visible"); } });
+    document.getElementById("consoleRun").onclick=()=>{ const v=document.getElementById("consoleInput").value.trim(); document.getElementById("consoleOutput").textContent = v==="QINGXIAO" ? "西王母监视日志：玩家行为已记录。青绡若强育桃核，将被封为新树种。烛龙闭眼导致因果坏死，第四章权限未开放。" : "无效指令。"; };
+
+    function jadeDust(){ const s=document.createElement("span"); s.style.cssText=`position:fixed;left:${Math.random()*100}vw;top:-8px;width:3px;height:3px;background:#8ecfbd;box-shadow:0 0 8px #8ecfbd;pointer-events:none;z-index:9;transition:transform 4s linear,opacity 4s`; document.body.appendChild(s); requestAnimationFrame(()=>{s.style.transform=`translateY(110vh) translateX(${Math.random()*80-40}px)`;s.style.opacity=0}); setTimeout(()=>s.remove(),4200); }
+    setInterval(jadeDust,1500);
+    const carriedBranch=localStorage.getItem("wuxing.chapter3Branch");
+    setBranch(carriedBranch||"abolish",true);
+    drawYaochi(0); drawWeak(0); drawSeed(); renderShards(); update();
+  </script>
+  <script>
+    const banquetScene=new Image(), peachHeartScene=new Image();
+    banquetScene.src="images/chapter3-yaochi-banquet.png";
+    peachHeartScene.src="images/chapter3-peach-heart.png";
+    drawYaochi=function(progress=0){
+      if(!banquetScene.complete){yctx.fillStyle="#101816";yctx.fillRect(0,0,620,260);return;}
+      yctx.clearRect(0,0,620,260);yctx.drawImage(banquetScene,0,0,620,260);
+      const fog=yctx.createLinearGradient(0,0,0,260);fog.addColorStop(0,`rgba(8,20,18,${.8-progress*.7})`);fog.addColorStop(1,`rgba(27,15,8,${.64-progress*.5})`);yctx.fillStyle=fog;yctx.fillRect(0,0,620,260);
+      if(progress>.28){yctx.save();yctx.globalAlpha=Math.min(1,(progress-.28)*1.65);yctx.strokeStyle="#e9c879";yctx.lineWidth=3;yctx.shadowColor="#e9c879";yctx.shadowBlur=15;yctx.strokeRect(340,72,104,92);yctx.restore();}
+      if(progress>.72){yctx.fillStyle="rgba(239,215,144,.92)";yctx.font="18px KaiTi, serif";yctx.fillText("空席的玉杯仍温着。",348,192);}
+    };
+    drawSeed=function(){
+      if(!peachHeartScene.complete){sctx.fillStyle="#071111";sctx.fillRect(0,0,420,220);return;}
+      sctx.clearRect(0,0,420,220);sctx.drawImage(peachHeartScene,0,0,420,220);
+      const cover=Math.max(.08,.68-state.seedWater*.1);sctx.fillStyle=`rgba(2,10,9,${cover})`;sctx.fillRect(0,0,420,220);
+      sctx.save();sctx.strokeStyle=state.seedWater===5?"#c9fff0":state.seedWater>5?"#9d1c19":"rgba(142,207,189,.42)";sctx.lineWidth=2;sctx.shadowColor=sctx.strokeStyle;sctx.shadowBlur=12;for(let r=28;r<116;r+=24){sctx.beginPath();sctx.ellipse(210,120,r*1.45,r*.58,0,0,Math.PI*2);sctx.stroke();}sctx.restore();
+      sctx.fillStyle="#e9e2c8";sctx.font="16px SimSun";sctx.fillText(`残魂灌溉：${state.seedWater} / 5`,145,28);if(state.seedWater===5){sctx.fillStyle="#c9fff0";sctx.fillText("裂缝里浮出一句：核中有毒。",104,196);}
+    };
+    banquetScene.onload=()=>drawYaochi(Number(document.getElementById("washSlider").value)/100);
+    peachHeartScene.onload=()=>drawSeed();
+    drawYaochi(Number(document.getElementById("washSlider").value)/100);drawSeed();
+  </script>
+  <script src="js/exploration-expansion.js"></script>
+  <script src="js/arg-field-recorder.js"></script>
+</body>
+</html>
