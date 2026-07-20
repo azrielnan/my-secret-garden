@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>纸人煞 · 前情提要</title>
+  <link rel="stylesheet" href="css/prologue.css">
+</head>
+<body>
+  <main class="prologue-shell">
+    <section class="mail-window" aria-label="定时求救邮件">
+      <div class="window-bar"><span></span><span></span><span></span><b>邮件 · 已恢复的本地副本</b></div>
+      <div class="mail-meta">
+        <p><b>发件人</b> 陈五行 &lt;chenwuxing-archive@example.invalid&gt;</p>
+        <p><b>发送时间</b> 癸卯年七月十五，子时三刻</p>
+        <p><b>主题</b> 若你收到这封信，说明我还没有回来</p>
+      </div>
+      <article class="mail-copy">
+        <p>我错了。</p>
+        <p>苏婉不是回来了，是有什么东西披着她的八字进了门。</p>
+        <p>不要找我的人，先找我的站。旧稿、合婚帖、快照与空白页都还在。它们不会替你说出答案，但会记得你看过什么。</p>
+        <p>地址已经写入浏览器缓存。</p>
+      </article>
+      <button id="openArchive" type="button">访问五行风水录</button>
+    </section>
+  </main>
+  <section class="browser-launch" id="browserLaunch" aria-live="polite" aria-hidden="true">
+    <div class="browser-frame">
+      <div class="browser-bar"><i></i><i></i><i></i><span>五行风水录 · 本地缓存</span></div>
+      <div class="browser-address">wuxingfslog.local/archive/index.html</div>
+      <div class="restore-copy"><b>正在恢复旧站索引</b><span id="restoreStatus">读取离线卷宗…</span></div>
+      <div class="restore-track"><span></span></div>
+    </div>
+  </section>
+  <script>
+    document.getElementById("openArchive").addEventListener("click", () => {
+      const launch = document.getElementById("browserLaunch");
+      launch.setAttribute("aria-hidden", "false");
+      launch.classList.add("show");
+      setTimeout(() => document.getElementById("restoreStatus").textContent = "卷宗索引已恢复。", 540);
+      setTimeout(() => location.href = "index.html", 1250);
+    });
+  </script>
+</body>
+</html>

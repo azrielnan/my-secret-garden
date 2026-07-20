@@ -1,0 +1,114 @@
+:root {
+  color-scheme: dark;
+  --ink: #111411;
+  --ink-soft: #182019;
+  --paper: #e2d1aa;
+  --muted: #aa9f86;
+  --line: rgba(226, 209, 170, .25);
+  --red: #bd3f2d;
+  --jade: #6f9a7d;
+  --gold: #d0aa61;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  color: var(--paper);
+  font-family: "SimSun", "Songti SC", serif;
+  background:
+    linear-gradient(90deg, rgba(208, 170, 97, .04) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(208, 170, 97, .035) 1px, transparent 1px),
+    #101411;
+  background-size: 28px 28px;
+}
+
+.library-shell {
+  width: min(1240px, calc(100vw - 40px));
+  margin: 0 auto;
+  padding: 60px 0 72px;
+}
+
+.library-header {
+  display: grid;
+  gap: 12px;
+  padding: 0 0 32px;
+  border-bottom: 1px solid var(--line);
+}
+
+.archive-id {
+  margin: 0;
+  color: var(--gold);
+  font: .78rem Consolas, "Courier New", monospace;
+}
+
+h1,
+h2,
+p { margin: 0; }
+
+h1 {
+  color: #f1dfae;
+  font: 3.5rem/1 "STXingkai", "KaiTi", serif;
+  font-weight: normal;
+}
+
+.library-summary { color: var(--muted); font-size: 1.05rem; }
+
+.catalog { padding-top: 34px; }
+
+.catalog-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+h2 { color: #e3cf99; font: 1.6rem "STXingkai", "KaiTi", serif; font-weight: normal; }
+#catalogCount { color: var(--muted); font: .82rem Consolas, "Courier New", monospace; }
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.game-card {
+  position: relative;
+  display: grid;
+  min-height: 410px;
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid var(--line);
+  background: var(--ink-soft);
+  transition: border-color .2s ease, transform .2s ease;
+}
+
+.game-card:hover,
+.game-card:focus-visible { border-color: var(--gold); transform: translateY(-3px); outline: none; }
+
+.game-card img { position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: .78; transition: transform .45s ease; }
+.game-card:hover img { transform: scale(1.035); }
+
+.game-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(8, 10, 8, .96), rgba(8, 10, 8, .06) 70%);
+}
+
+.game-card-copy { position: relative; z-index: 1; align-self: end; padding: 24px; }
+.game-card-copy small { display: block; margin-bottom: 9px; color: #b9d0a8; font: .72rem Consolas, "Courier New", monospace; }
+.game-card-copy h3 { margin: 0 0 9px; color: #f0dda9; font: 2rem "STXingkai", "KaiTi", serif; font-weight: normal; }
+.game-card-copy p { color: #d6c8a8; line-height: 1.75; }
+
+.catalog-error { color: #e78c7e; }
+
+@media (max-width: 640px) {
+  .library-shell { width: min(100% - 28px, 1240px); padding: 34px 0 48px; }
+  h1 { font-size: 2.65rem; }
+  .game-card { min-height: 360px; }
+}

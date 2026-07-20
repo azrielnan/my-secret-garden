@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>归墟·烛龙</title>
+  <script src="js/main.js" defer></script>
+  <style>
+    /*
+      纸人煞 第四章《归墟·烛龙》
+      扩展接口：
+      - ENDING_FLAGS：启用/禁用隐藏结局
+      - CANON_CARDS：前作结局牌
+      - TRIALS：试炼配置
+      - endings：结局文本
+    */
+    :root{
+      --bg:#07030d; --panel:#120a1c; --panel2:#1b1028; --bronze:#9b6f3b; --gold:#d1a85a;
+      --purple:#4d2a78; --violet:#8b61d1; --fire:#d26a2a; --red:#b32626; --text:#e7dfef; --muted:#a89bb6;
+      --font-main:"SimSun","宋体",serif; --font-title:"STXingkai","华文行楷","KaiTi","楷体",serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;color:var(--text);font-family:var(--font-main);background:radial-gradient(circle at 50% -10%,rgba(139,97,209,.28),transparent 34%),radial-gradient(circle at 85% 18%,rgba(210,106,42,.12),transparent 22%),linear-gradient(180deg,#0b0414,#020104 70%);overflow-x:hidden}
+    body:before{content:"";position:fixed;inset:0;pointer-events:none;background-image:radial-gradient(circle,rgba(209,168,90,.35) 0 1px,transparent 1px),linear-gradient(90deg,transparent 0 49%,rgba(209,168,90,.06) 50%,transparent 51%);background-size:52px 52px,160px 100%;opacity:.2}
+    button,input{font:inherit} button{cursor:pointer}
+    .app{position:relative;z-index:1;width:min(1480px,calc(100vw - 24px));margin:0 auto;padding:16px 0 42px}
+    header{border:1px solid var(--bronze);background:linear-gradient(90deg,rgba(27,16,40,.96) 0 42%,rgba(7,3,13,.58)),url("images/chapter4-guixu-gate.png") center / cover;padding:18px;box-shadow:inset 0 0 36px rgba(0,0,0,.5)}
+    h1{margin:0;font-family:var(--font-title);font-size:clamp(2.5rem,7vw,5.2rem);color:#f4dc9d;text-shadow:0 0 18px rgba(210,106,42,.45)}
+    h2{font-family:var(--font-title);font-size:clamp(1.8rem,4vw,3rem);color:#f4dc9d;margin:0 0 12px}
+    h3{color:var(--gold)}
+    p{line-height:1.85}.note{color:var(--muted)}
+    .mail,.panel,.side,.nav{border:1px solid rgba(155,111,59,.65);background:linear-gradient(180deg,rgba(22,10,34,.96),rgba(8,4,14,.94));box-shadow:inset 0 0 34px rgba(0,0,0,.48),0 18px 38px rgba(0,0,0,.26)}
+    .mail{margin-top:12px;padding:14px}.mail.auto-loaded{border-color:rgba(126,181,177,.72)}.mail.auto-loaded .cards{display:none}
+    .layout{display:grid;grid-template-columns:220px minmax(0,1fr)300px;gap:14px;margin-top:14px}
+    .nav,.side{position:sticky;top:10px;align-self:start;padding:12px}
+    .nav button{width:100%;min-height:45px;margin-bottom:8px;text-align:left;color:var(--text);border:1px solid rgba(209,168,90,.35);background:#100817;padding:8px 10px}
+    .nav button.active,.nav button:hover{border-color:var(--fire);background:#25112a;color:#fff}
+    .panel{display:none;min-height:760px;padding:clamp(16px,3vw,28px)}
+    .panel.active{display:block;animation:fadeIn .35s ease both}
+    .cards,.scrolls,.stars,.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+    .card,.scroll,.star-slip{border:1px solid rgba(209,168,90,.55);background:#140d1c;color:var(--text);padding:12px;min-height:110px}
+    .card b,.scroll b,.star-slip b{color:#f4dc9d}.card p,.scroll p,.star-slip p{color:var(--muted)}
+    .card.selected,.scroll.selected{border-color:var(--fire);box-shadow:0 0 16px rgba(210,106,42,.25)}
+    .mail.auto-loaded .cards{display:grid}
+    .card.record{pointer-events:none;background:linear-gradient(135deg,rgba(62,42,25,.92),rgba(18,12,25,.96));border-color:rgba(209,168,90,.76)}
+    .bronze-btn,.fire-btn{border:1px solid var(--bronze);color:#ffe0a0;background:linear-gradient(180deg,#5a3c20,#160b08);padding:9px 14px;margin:4px}
+    .fire-btn{border-color:var(--red);background:linear-gradient(180deg,#681c1c,#170506)}
+    input{min-height:40px;border:1px solid rgba(209,168,90,.45);background:#050207;color:var(--text);padding:8px 10px}
+    .door{position:relative;min-height:500px;overflow:hidden;border:10px double #5c3f23;background:radial-gradient(ellipse at 50% 45%,rgba(210,106,42,.26),transparent 34%),radial-gradient(ellipse at 50% 105%,rgba(139,97,209,.24),transparent 42%),linear-gradient(90deg,rgba(33,21,36,.76),rgba(11,6,16,.5) 50%,rgba(33,21,36,.76)),url("images/chapter4-guixu-gate.png") center / cover}
+    .door:before{content:"";position:absolute;inset:18px;border:1px solid rgba(209,168,90,.28);background:repeating-linear-gradient(90deg,rgba(209,168,90,.08) 0 1px,transparent 1px 54px),radial-gradient(circle at 50% 48%,transparent 0 98px,rgba(155,111,59,.2) 99px 102px,transparent 103px)}
+    .door:after{content:"";position:absolute;left:50%;top:54%;width:min(680px,90%);height:150px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(ellipse,rgba(139,97,209,.18),transparent 67%);filter:blur(2px)}
+    .ring{position:absolute;top:39%;width:132px;aspect-ratio:1;border-radius:50%;border:12px solid var(--bronze);background:radial-gradient(circle,#07030d 0 48%,rgba(209,168,90,.16) 49% 56%,#09050d 57%);box-shadow:0 0 26px rgba(209,168,90,.22),inset 0 0 18px rgba(0,0,0,.65)}
+    .ring.left{left:calc(50% - 150px)}.ring.right{right:calc(50% - 150px)}
+    .star-token{position:relative;display:inline-grid;place-items:center;width:70px;aspect-ratio:1;border-radius:50%;border:1px solid var(--gold);background:radial-gradient(circle at 35% 25%,rgba(255,229,154,.46),transparent 17%),radial-gradient(circle,#39223f 0 39%,#120b1a 40% 60%,#7c542b 61% 64%,#110914 65%);color:#f7df9d;margin:7px;cursor:grab;font-family:var(--font-title);font-size:1.36rem;box-shadow:0 0 0 5px rgba(36,18,43,.78),0 0 18px rgba(209,168,90,.26),inset 0 0 18px rgba(0,0,0,.65)}
+    .star-token::after{content:"";position:absolute;inset:8px;border:1px solid rgba(244,220,157,.35);border-radius:50%;background:conic-gradient(from 0deg,transparent 0 11%,rgba(244,220,157,.3) 12% 13%,transparent 14% 24%,rgba(244,220,157,.3) 25% 26%,transparent 27% 100%)}
+    .star-token.done{background:radial-gradient(circle,#fff0af 0 11%,#d89d45 12% 18%,#3b203f 19% 42%,#7c542b 43% 46%,#110914 47%);color:#fff4ce;box-shadow:0 0 0 5px rgba(72,34,50,.82),0 0 28px rgba(240,189,86,.52),inset 0 0 18px rgba(0,0,0,.65)}
+    canvas{display:block;width:100%;max-width:100%;border:1px solid rgba(209,168,90,.55);background:#09050d;box-shadow:inset 0 0 42px rgba(0,0,0,.72),0 12px 24px rgba(0,0,0,.22)}
+    .eye{position:relative;width:min(680px,88vw);height:328px;margin:18px auto;overflow:hidden;border-radius:50%;background:radial-gradient(ellipse at 50% 50%,#12080e 0 12%,#2f1018 13% 24%,#b64e25 25% 30%,#f0a747 31% 35%,#1c0a15 36% 53%,#050307 54%);border:1px solid rgba(209,168,90,.45);box-shadow:0 0 0 8px rgba(31,13,31,.72),0 0 82px rgba(210,106,42,.32),inset 0 0 54px rgba(0,0,0,.88);animation:blink 6s infinite}
+    .eye:before{content:"";position:absolute;inset:12% 7%;border-radius:50%;background:radial-gradient(ellipse at 50% 50%,#f7d57c 0 7%,#241019 8% 19%,transparent 20%),repeating-radial-gradient(ellipse at 50% 50%,rgba(255,210,112,.28) 0 1px,transparent 2px 10px);box-shadow:inset 0 0 34px rgba(95,26,28,.74),0 0 48px rgba(226,111,44,.26)}
+    .eye:after{content:"";position:absolute;left:50%;top:50%;width:12px;height:232px;translate:-50% -50%;border-radius:50%;background:linear-gradient(transparent,#08030a 10%,#08030a 90%,transparent);box-shadow:0 0 12px #ffbf61,0 0 34px rgba(255,124,53,.76)}
+    .tree-scene{position:relative;min-height:620px;overflow:hidden;border:1px solid var(--bronze);background:linear-gradient(180deg,rgba(22,11,32,.08),rgba(5,2,7,.4)),url("images/chapter4-causality-tree-ding.png") center / cover}
+    .tree-scene:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 72%,rgba(209,168,90,.2),transparent 22%),linear-gradient(180deg,transparent 55%,rgba(5,2,7,.55));pointer-events:none}
+    .tree{display:none}
+    .ding{position:relative;z-index:1;margin:326px auto 12px;width:238px;height:150px;border:9px double #a9783e;border-radius:22px 22px 82px 82px;background:radial-gradient(ellipse at 50% 26%,rgba(232,149,55,.28),transparent 34%),linear-gradient(135deg,#3b1b19,#10080d 44%,#29120f);box-shadow:0 24px 35px rgba(0,0,0,.55),inset 0 0 0 10px rgba(25,10,14,.62),inset 0 -30px 32px rgba(0,0,0,.46);transition:box-shadow .25s ease}
+    .ding::before{content:"因果鼎";position:absolute;left:50%;top:34px;translate:-50% 0;width:118px;height:54px;display:grid;place-items:center;border:1px solid rgba(246,211,133,.52);color:#f6d28a;font-family:var(--font-title);font-size:1.35rem;background:rgba(20,6,10,.52);box-shadow:inset 0 0 16px rgba(210,106,42,.18)}
+    .ding::after{content:"";position:absolute;left:50%;top:-22px;width:164px;height:45px;translate:-50% 0;border:8px double #a9783e;border-bottom:0;border-radius:50% 50% 0 0;box-shadow:0 -7px 18px rgba(210,106,42,.22)}
+    .tree-scene .ding{display:none}
+    .tree-scene.lit::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 76%,rgba(239,143,50,.36),transparent 18%);mix-blend-mode:screen;animation:forgeGlow 1.4s ease-in-out infinite}
+    .ending{border:1px solid var(--red);background:#100509;padding:16px;white-space:pre-wrap;line-height:1.9;margin-top:12px}.ending-cast{display:block;width:min(100%,900px);margin:18px auto 0;border:1px solid rgba(209,168,90,.62);box-shadow:0 0 28px rgba(209,168,90,.16)}
+    .status{list-style:none;padding:0;margin:0}.status li{display:flex;justify-content:space-between;border-bottom:1px dashed rgba(209,168,90,.25);padding:6px 0}.ok{color:#d7ffb6}.bad{color:#ff9288}
+    .guixuzi{width:86px;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;margin:8px auto;color:#fee0a2;background:conic-gradient(#4d2a78,#9b6f3b,#4d2a78);cursor:pointer}
+    .hidden-line{font-size:10px;color:rgba(255,255,255,.24);cursor:pointer}
+    .pixels{position:fixed;left:0;right:0;bottom:0;z-index:30;display:none;justify-content:center;gap:6px;padding:12px;background:rgba(0,0,0,.6)}.pixels.show{display:flex}
+    .pixel{width:24px;height:24px;background:#d1a85a;box-shadow:0 -24px #8b61d1,24px 0 #b32626}
+    @keyframes fadeIn{from{opacity:0;filter:blur(6px)}to{opacity:1;filter:blur(0)}}@keyframes blink{0%,90%,100%{transform:scaleY(1)}95%{transform:scaleY(.08)}}@keyframes forgeGlow{0%,100%{opacity:.34}50%{opacity:.78}}
+    @media(max-width:1000px){.layout{grid-template-columns:1fr}.nav,.side{position:static}}
+  </style>
+</head>
+<body>
+  <!-- 归墟门星图顺序：角亢氐房心尾箕。对应事件：纸人新娘、阴司债、役鬼解放、蟠桃核、昆仑共守、玉碎昆仑、双树并生。 -->
+  <!-- 烛龙竖瞳摩斯：YOU ARE THE CAUSE。 -->
+  <div class="app">
+    <header>
+      <h1>归墟 · 烛龙</h1>
+      <p class="note">归墟因果录系统 / 归墟子邀请函 / 烛龙睁眼倒计时未校准</p>
+      <section class="mail">
+        你行走过许多条路：匠人的烛火、判官的笔、蟠桃的核、三生石的泪。如今，所有路的尽头都指向同一个名字——归墟。请选择你愿意带入归墟的前作结局牌，可多选。
+        <div class="cards" id="canonCards"></div>
+        <p id="openingText" class="note">尚未生成开场词。</p>
+      </section>
+    </header>
+
+    <main class="layout">
+      <nav class="nav">
+        <button class="active" data-panel="gate">壹 · 归墟之门</button>
+        <button data-panel="corridor">贰 · 因果回廊</button>
+        <button data-panel="thread">叁 · 青铜司命台</button>
+        <button data-panel="pool">肆 · 星落池</button>
+        <button data-panel="heart">伍 · 烛龙心室</button>
+        <button data-panel="tree">陆 · 归墟之树</button>
+      </nav>
+
+      <section class="panel active" id="gate">
+        <h2>归墟之门</h2>
+        <p>巨大的青铜门上，两条衔尾烛龙咬住门环。问题不是写在门上，而是刻在星宿图里：何为因？何为果？拖拽星宿，按前作事件顺序排列。<a href="secret/recovered-ledger.html#D-007">D-007 星图补卷</a> 也许还认得门环的走向。</p>
+        <div class="door"><div class="ring left"></div><div class="ring right"></div><div id="starTokens" style="position:relative;z-index:1;padding:250px 24px 24px;text-align:center"></div></div>
+        <button class="bronze-btn" id="checkGate">扣响门环</button><p id="gateResult" class="note"></p>
+      </section>
+
+      <section class="panel" id="corridor">
+        <h2>因果回廊</h2>
+        <p>两侧卷轴展开，都是你可能经历过的前作缩影。摘取三卷带入试炼，卷轴会在后续给你额外对话或跳谜机会。</p>
+        <div class="scrolls" id="scrolls"></div>
+      </section>
+
+      <section class="panel" id="thread">
+        <h2>青铜司命台 · 因果纺线</h2>
+        <p>红为阴司契约线，青为姻缘线，金为昆仑神职线，紫为你自己的因果线。点击线端连接到对应卷轴。若故意让红线与青线同心，会提前召出合道者虚影。</p>
+        <canvas id="threadCanvas" width="760" height="360"></canvas>
+        <div class="choices"><button class="bronze-btn" data-line="red">理顺红线</button><button class="bronze-btn" data-line="cyan">理顺青线</button><button class="bronze-btn" data-line="gold">理顺金线</button><button class="bronze-btn" data-line="purple">理顺紫线</button><button class="fire-btn" id="deadKnot">打同心死结</button></div>
+        <p id="threadText" class="note"></p>
+      </section>
+
+      <section class="panel" id="pool">
+        <h2>星落池 · 记忆回响</h2>
+        <p>池中浮起竹简，句子残缺时，拖动月光石照亮背面。判断台词属于哪个前作结局，投入对应星象灯座。</p>
+        <canvas id="poolCanvas" width="760" height="320"></canvas>
+        <div class="choices"><button class="bronze-btn" id="moonStone">拖动月光石</button><button class="bronze-btn" data-slip="order">投入匠人灯座</button><button class="bronze-btn" data-slip="flower">投入昆仑灯座</button><button class="bronze-btn" data-slip="free">投入自由灯座</button><button class="fire-btn" id="selfReflection">点击倒影</button></div>
+        <p id="poolText" class="note"></p>
+      </section>
+
+      <section class="panel" id="heart">
+        <h2>烛龙心室 · 问心</h2>
+        <p>烛龙将要睁眼。若十秒不回答，它会替你说出隐藏答案，但会改变可选结局。输入摩斯答案，可直接打开另一条门。</p>
+        <div class="eye"></div>
+        <p id="question">烛龙：你救了那么多人，可曾想过自己？</p>
+        <div class="choices"><button class="bronze-btn" data-answer="selfless">我只是想让他们自由</button><button class="fire-btn" data-answer="selfish">有，我想让他们都按我认为好的方式活着</button><input id="heartInput" placeholder="也可输入一句隐藏答案"><button class="bronze-btn" id="heartSubmit">回应竖瞳</button></div>
+        <p id="heartText" class="note"></p>
+      </section>
+
+      <section class="panel" id="tree">
+        <h2>归墟之树</h2>
+        <p>青铜因果树遮天蔽日，每片叶子都是一个开放结局。将丝线、星象与问心答案投入归墟鼎，拉动风箱炼出因果印。</p>
+        <div class="tree-scene">
+          <svg class="tree" viewBox="0 0 460 470" aria-hidden="true"><defs><linearGradient id="bronzeBranch" x1="0" x2="1"><stop stop-color="#6e421f"/><stop offset=".5" stop-color="#b48642"/><stop offset="1" stop-color="#5b321a"/></linearGradient><radialGradient id="leafGlow"><stop stop-color="#f2cf76"/><stop offset=".7" stop-color="#c4913d"/><stop offset="1" stop-color="#6b3a20"/></radialGradient></defs><path d="M236 444 C210 356 235 260 224 178 C216 116 212 76 230 34" stroke="url(#bronzeBranch)" stroke-width="28" fill="none" stroke-linecap="round"/><path d="M224 202 C174 172 120 128 58 62" stroke="url(#bronzeBranch)" stroke-width="17" fill="none" stroke-linecap="round"/><path d="M225 165 C172 128 153 78 124 34" stroke="url(#bronzeBranch)" stroke-width="12" fill="none" stroke-linecap="round"/><path d="M236 190 C288 142 326 92 407 44" stroke="url(#bronzeBranch)" stroke-width="17" fill="none" stroke-linecap="round"/><path d="M237 238 C304 225 350 198 410 151" stroke="url(#bronzeBranch)" stroke-width="12" fill="none" stroke-linecap="round"/><path d="M216 286 C166 282 116 300 62 344" stroke="url(#bronzeBranch)" stroke-width="12" fill="none" stroke-linecap="round"/><g fill="url(#leafGlow)"><circle cx="58" cy="62" r="17"/><circle cx="124" cy="34" r="13"/><circle cx="407" cy="44" r="18"/><circle cx="410" cy="151" r="12"/><circle cx="62" cy="344" r="12"/><circle cx="230" cy="34" r="14"/><circle cx="152" cy="137" r="11"/><circle cx="320" cy="103" r="12"/></g><g fill="none" stroke="#d1a85a" stroke-opacity=".55"><path d="M58 62 C108 82 129 104 152 137"/><path d="M407 44 C364 76 342 84 320 103"/><path d="M62 344 C112 310 163 294 216 286"/></g></svg>
+          <div class="ding" id="ding"></div>
+        </div>
+        <div class="choices"><button class="bronze-btn" id="bellows">拉动风箱</button><button class="fire-btn" id="sealOutcome">炼出因果印</button><button class="fire-btn" id="endA" hidden></button><button class="bronze-btn" id="endB" hidden></button><button class="bronze-btn" id="endC" hidden></button><button class="fire-btn" id="endD" hidden></button><button class="fire-btn" id="endE" hidden></button><button class="bronze-btn" id="endF" hidden></button></div>
+        <div class="ending" id="endingBox">因果印尚未炼成。</div>
+        <p class="hidden-line" id="longPress">长按此处，可见献辞。</p>
+      </section>
+
+      <aside class="side">
+        <div class="guixuzi" id="guixuzi">归墟子</div>
+        <p id="guixuziText" class="note">归墟子：选牌吧。你带来的不是过去，是证词。</p>
+        <h3>状态</h3><ul class="status" id="status"></ul>
+      </aside>
+    </main>
+  </div>
+  <div class="pixels" id="pixels"></div>
+
+  <script>
+    const ENDING_FLAGS={A:true,B:true,C:true,D:true,E:true,F:true};
+    const CANON_CARDS=[
+      ["craft","继任匠人","新订单仍在燃烛。"],["abolish","契约废除","血契化灰。"],["free","阴阳两消","役鬼魂魄飞升。"],["peach","蟠桃新生","忘缘花开。"],["kunlun","共守昆仑","两人守树。"],["jade","玉碎昆仑","神职归凡。"],["twin","双树并生","规则与感情共存。"]
+    ];
+    const state={cards:new Set(),gate:[],gateOpened:false,scrolls:new Set(),lines:new Set(),threadStep:0,deadKnot:false,harmony:false,slips:new Set(),poolLit:false,poolStep:0,selfJade:false,silent:0,cause:false,selfish:false,bellows:0,guixuziClicks:0,konami:""};
+    const panels=document.querySelectorAll(".panel"), navs=document.querySelectorAll(".nav button"), status=document.getElementById("status");
+    function switchPanel(id){panels.forEach(p=>p.classList.toggle("active",p.id===id));navs.forEach(b=>b.classList.toggle("active",b.dataset.panel===id));}
+    navs.forEach(b=>b.onclick=()=>switchPanel(b.dataset.panel));
+    function update(){status.innerHTML=`<li><span>结局牌</span><b>${state.cards.size}/7</b></li><li><span>归墟门</span><b class="${state.gateOpened?'ok':'bad'}">${state.gateOpened?'已开':`${state.gate.length}/7`}</b></li><li><span>卷轴</span><b>${state.scrolls.size}/3</b></li><li><span>纺线</span><b>${state.lines.size}/4</b></li><li><span>星落池</span><b>${state.slips.size}/3</b></li><li><span>自观玉</span><b>${state.selfJade?'有':'无'}</b></li><li><span>因果印火候</span><b>${state.bellows}</b></li>`;syncEndChoices()}
+    function syncEndChoices(){document.getElementById("endD").hidden=true;document.getElementById("endE").hidden=true;document.getElementById("endF").hidden=true}
+    const cardBox=document.getElementById("canonCards");
+    let inheritedCards=[];try{inheritedCards=JSON.parse(localStorage.getItem("wuxing.chapter4Cards")||"[]")}catch{inheritedCards=[]}
+    const carriedCards=inheritedCards.length?CANON_CARDS.filter(c=>inheritedCards.includes(c[0])):[["blank","未归档卷宗","前案没有留下可验证的结局牌。"]];
+    carriedCards.forEach(c=>{const el=document.createElement("article");el.className="card record selected";el.innerHTML=`<b>${c[1]}</b><p>${c[2]}</p>`;if(c[0]!=="blank")state.cards.add(c[0]);cardBox.appendChild(el)});
+    if(inheritedCards.length)document.querySelector(".mail").classList.add("auto-loaded");
+    let explorationEffects={};try{explorationEffects=JSON.parse(localStorage.getItem("zhirensha.explore.effects")||"{}")}catch{explorationEffects={}}
+    function opening(){const t=[...state.cards].map(id=>CANON_CARDS.find(c=>c[0]===id)?.[1]).join("、")||"未选";const relic=explorationEffects.jadeBook?" 瑶池仙籍在卷轴边缘显出一行附注：西王母也曾为凡心迟疑。":"";document.getElementById("openingText").textContent=`归墟子记录：你携带 ${t} 入门。烛龙闭眼时，每个选择都长出一条如果。${relic}`;}
+    const order=["角","亢","氐","房","心","尾","箕"], starBox=document.getElementById("starTokens");
+    [...order].sort(()=>Math.random()-.5).forEach(s=>{const b=document.createElement("button");b.className="star-token";b.textContent=s;b.onclick=()=>{if(!state.gate.includes(s)){state.gate.push(s);b.classList.add("done")}update()};starBox.appendChild(b)});
+    document.getElementById("checkGate").onclick=()=>{if(state.cards.size<2){document.getElementById("gateResult").textContent="归墟门不收空手人。需要至少两份前案判词。";return}if(localStorage.getItem("zhirensha.arg.recoveredLedger")!=="1"){document.getElementById("gateResult").textContent="门环拒绝没有核对过 D-007 的人。旧物档案补卷里还有一张星图。";return}if(state.gate.join("")==="角亢氐房心尾箕"){state.gateOpened=true;document.getElementById("gateResult").textContent="青铜门开。因在前，果在后；你走过的路，就是门锁。"}else{state.gate=[];document.querySelectorAll(".star-token").forEach(x=>x.classList.remove("done"));document.getElementById("gateResult").textContent="星宿顺序不合，门环退回原位。去核对 D-007 的红线走向。"}update()};
+    const scrollBox=document.getElementById("scrolls");CANON_CARDS.forEach(c=>{const s=document.createElement("button");s.className="scroll";s.innerHTML=`<b>${c[1]}</b><p>${c[2]}</p>`;s.onclick=()=>{if(state.scrolls.size>=3&&!state.scrolls.has(c[0]))return;state.scrolls.has(c[0])?state.scrolls.delete(c[0]):state.scrolls.add(c[0]);s.classList.toggle("selected");update()};scrollBox.appendChild(s)});
+    const tc=document.getElementById("threadCanvas").getContext("2d");function drawThread(){tc.clearRect(0,0,760,360);const bg=tc.createLinearGradient(0,0,760,360);bg.addColorStop(0,"#050207");bg.addColorStop(.52,"#16091f");bg.addColorStop(1,"#09040d");tc.fillStyle=bg;tc.fillRect(0,0,760,360);tc.save();tc.globalAlpha=.18;tc.strokeStyle="#d1a85a";for(let r=44;r<190;r+=34){tc.beginPath();tc.ellipse(380,178,r*1.55,r,0,0,Math.PI*2);tc.stroke()}tc.restore();[["#b32626",58,0],["#35b6b1",122,1],["#d1a85a",190,2],["#8b61d1",254,3]].forEach(([col,y,i])=>{tc.strokeStyle=col;tc.lineWidth=7;tc.shadowColor=col;tc.shadowBlur=12;tc.beginPath();tc.moveTo(68,y);tc.bezierCurveTo(220,y-70+i*26,470,y+82-i*44,692,y+10);tc.stroke();tc.shadowBlur=0;tc.fillStyle=col;tc.beginPath();tc.arc(68,y,9,0,Math.PI*2);tc.arc(692,y+10,9,0,Math.PI*2);tc.fill()});tc.fillStyle="#e7dfef";tc.font="20px SimSun";tc.fillText("红=契约  青=姻缘  金=神职  紫=你",226,328)}drawThread();
+    const threadOrder=["red","cyan","gold","purple"];
+    document.querySelectorAll("[data-line]").forEach(b=>b.onclick=()=>{if(b.dataset.line===threadOrder[state.threadStep]){state.lines.add(b.dataset.line);state.threadStep++;document.getElementById("threadText").textContent=`${b.textContent}归位：一段前案余音从铜轮深处传来。`;if(state.threadStep===4)document.getElementById("threadText").textContent="四线终于不再互相勒紧。";}else{state.lines.clear();state.threadStep=0;document.getElementById("threadText").textContent="线序错乱，铜轮把所有丝线弹回原位。先分清哪一根是债、缘、职与己。";}update()});
+    document.getElementById("deadKnot").onclick=()=>{state.deadKnot=true;state.harmony=true;document.getElementById("threadText").textContent="红线与青线成同心死结。合道者虚影提前现身：规则不是牢笼，除非无人敢改。";update()};
+    const pc=document.getElementById("poolCanvas").getContext("2d");function drawPool(light=false){pc.clearRect(0,0,760,320);const bg=pc.createLinearGradient(0,0,0,320);bg.addColorStop(0,"#07030c");bg.addColorStop(.52,"#0e0620");bg.addColorStop(1,"#030105");pc.fillStyle=bg;pc.fillRect(0,0,760,320);pc.save();for(let i=0;i<110;i++){const x=(i*83)%760,y=(i*47)%310;pc.fillStyle=i%7===0?"rgba(209,168,90,.75)":"rgba(139,97,209,.58)";pc.fillRect(x,y,2,2)}pc.globalAlpha=.24;pc.strokeStyle="#8b61d1";for(let y=74;y<300;y+=36){pc.beginPath();pc.moveTo(0,y);pc.bezierCurveTo(190,y+18,360,y-16,760,y+8);pc.stroke()}pc.restore();const moon=pc.createRadialGradient(light?520:620,70,3,light?520:620,70,96);moon.addColorStop(0,"rgba(244,220,157,.95)");moon.addColorStop(1,"rgba(244,220,157,0)");pc.fillStyle=moon;pc.fillRect(0,0,760,320);pc.fillStyle="rgba(34,18,12,.72)";pc.strokeStyle="rgba(209,168,90,.75)";[[58,64],[58,138],[58,212]].forEach(([x,y])=>{pc.beginPath();pc.roundRect(x,y,360,42,5);pc.fill();pc.stroke()});pc.fillStyle="#d1a85a";pc.font="24px SimSun";pc.fillText(light?"下一个订单，是给孤魂扎玩具。":"下一个订单……",78,93);pc.fillText(light?"花名忘缘。":"花名……",78,167);pc.fillText(light?"所有人都自由了。":"所有人……",78,241)}drawPool();
+    document.getElementById("moonStone").onclick=()=>{state.poolLit=true;drawPool(true);document.getElementById("poolText").textContent="月光石照亮竹简背面：订单、忘缘、自由，分别应归于它们的旧结局。"};
+    const slipOrder=["order","flower","free"];
+    document.querySelectorAll("[data-slip]").forEach(b=>b.onclick=()=>{if(!state.poolLit){document.getElementById("poolText").textContent="竹简正面被水雾遮住，先以月光石照亮背面。";return}if(b.dataset.slip===slipOrder[state.poolStep]){state.slips.add(b.dataset.slip);state.poolStep++;document.getElementById("poolText").textContent=state.poolStep===3?"三枚竹简各归其位，池水退尽。":"竹简归位，池水退去一寸。";}else{state.slips.clear();state.poolStep=0;document.getElementById("poolText").textContent="星象灯座拒绝了这句台词，竹简重新浮回池面。";}update()});
+    document.getElementById("selfReflection").onclick=()=>{state.selfJade=true;document.getElementById("poolText").textContent="倒影里不是任何 NPC，是你。自观玉已取得。";update()};
+    let silence=setTimeout(()=>{state.silent++;document.getElementById("heartText").textContent="烛龙自答：你没有。因为你一直在扮演拯救者，忘了自己也是局中人。";update()},10000);
+    document.querySelectorAll("[data-answer]").forEach(b=>b.onclick=()=>{clearTimeout(silence);state.selfish=b.dataset.answer==="selfish";document.getElementById("heartText").textContent=state.selfish?"执念记录：你想让他们都按你认为好的方式活着。":"烛龙记录：你仍选择自由。";update()});
+    document.getElementById("heartSubmit").onclick=()=>{const v=document.getElementById("heartInput").value.trim().toUpperCase();if(v==="YOU ARE THE CAUSE"){state.cause=true;document.getElementById("heartText").textContent="烛龙沉默：原来你已明白。那么做出选择吧，不是作为侦探，而是作为因。"}update()};
+    document.getElementById("bellows").onclick=()=>{state.bellows++;document.getElementById("ding").style.boxShadow=`0 0 ${state.bellows*8}px ${state.selfish?"#b32626":"#d26a2a"}`;update()};
+    function readyForEnding(){return state.gateOpened&&state.scrolls.size===3&&state.lines.size===4&&state.slips.size===3&&state.bellows>=3&&(state.silent>0||state.selfish||state.cause)}
+    function end(t){const box=document.getElementById("endingBox");if(!readyForEnding()){box.textContent="归墟鼎未成印。需要打开归墟门、带走三卷、理顺四线、安置三枚竹简、拉动三次风箱，并回应或静听烛龙。";return}box.textContent=t;const outcome=t.match(/结局([A-F])/);if(!outcome)return;localStorage.setItem("wuxing.chapter4Outcome",outcome[1]);const bridge=document.createElement("p");bridge.className="note";bridge.innerHTML='烛焰沿着太极裂缝向终南山投去。<a class="bronze-btn" style="display:inline-block;margin-left:8px" href="chapter5-bagua-guiyuan.html">进入八卦归元阵</a>';box.appendChild(bridge);const cast=document.createElement("img");cast.className="ending-cast";cast.src="images/finale-cast.png";cast.alt="调查者与诸位因果当事人站在归墟树下";box.appendChild(cast);const echoes={peach:"忘缘花在一片旧枝上开放，提醒你曾经选择让执念停在果实之前。",kunlun:"昆仑守树的两道影子，替因果树挡住了第一阵风。",jade:"玉簪断裂的声音仍在归墟深处回响，像一次不肯妥协的告别。",twin:"双树的根系穿过归墟土层，证明规则和感情并非只能互相吞没。"};const prior=[...state.cards].map(id=>echoes[id]).find(Boolean);if(prior){const echo=document.createElement("p");echo.className="note";echo.textContent=prior;box.appendChild(echo)}}
+    document.getElementById("endA").onclick=()=>end("结局A【因果重置·无垢】\n烛龙睁眼，一切重置。所有角色的笑脸快速闪过，然后归于白屏：他们从未受苦，也从未相遇。你替他们选择了安宁。");
+    document.getElementById("endB").onclick=()=>end("结局B【多元共存·星河】\n烛龙继续闭眼，因果树各枝并茂。星图展开，每颗星都是一个版本：新订单成了孤魂玩具，共守昆仑的人在树下喝茶，苏婉修复古画，陈五行今世画伞。");
+    document.getElementById("endC").onclick=()=>end("结局C【因果托付·守望】\n你成为新的因果维护者。青铜树下，你编织新的丝线。每次选择某条线，都会看见你帮助过的人在另一种生活里获得平静。");
+    document.getElementById("endD").onclick=()=>{if(state.harmony)end("结局D【合道归墟·双面神】\n合道者接替烛龙。一面对过去，一面对未来。书页上写着你的名字：善用规则而不囿，敢让情义入法。");else end("双面神未现。红线与青线尚未成结。")};
+    document.getElementById("endE").onclick=()=>{if(state.selfish)end("结局E【执念之焰·永燃】\n你把所有人的命运与你的执念绑定。他们都活着，住在无限大的老宅里，日日温馨，永不离开。幸福成了囚笼。");else end("你尚未承认自己的私心。")};
+    document.getElementById("endF").onclick=()=>{if(state.selfJade&&state.silent>0&&!state.deadKnot)end("结局F【烛龙之泪·新生】\n你不改变烛龙，而把自己的因果记忆化为雨。烛龙落泪，泪处生出不受规则束缚的新线。空白画卷旁放着一支笔：故事未竟，由你续写。");else end("新生需要沉默、自观玉，以及没有死结的纺线。")};
+    const keepStar=endB.onclick, takeCharge=endC.onclick;
+    endB.onclick=()=>state.selfJade&&state.silent>0&&!state.deadKnot?endF.click():keepStar();
+    endC.onclick=()=>state.harmony?endD.click():state.selfish?endE.click():takeCharge();
+
+    function resolveGuixuOutcome(){
+      if(state.selfJade&&state.silent>0&&!state.deadKnot&&!state.selfish)return "结局F【烛龙之泪·新生】\n你没有再替任何人规定去处，而把自己的因果记忆化为雨。烛龙落泪，泪处生出不受规则束缚的新线。";
+      if(state.deadKnot&&state.harmony)return "结局D【合道归墟·双面神】\n你让债与缘在同一枚死结中对照，合道者接替烛龙。一面对过去，一面对未来。";
+      if(state.selfish)return "结局E【执念之焰·永燃】\n你想替所有人安排幸福，因果印却把这份愿望烧成没有出口的环。";
+      if(state.cause)return "结局C【因果托付·守望】\n你承认自己也是因的一部分，归墟把维护因果的职责交回你手中。";
+      if(state.cards.has("abolish")||state.cards.has("free"))return "结局B【多元共存·星河】\n你曾经让契约和役鬼获得不同的出口，因此烛龙继续闭眼，因果树各枝并茂。";
+      return "结局A【因果重置·无垢】\n你没有留下足以反驳旧秩序的证词，烛龙睁眼，所有未被记录的痛苦归于白页。";
+    }
+    document.getElementById("sealOutcome").onclick=()=>end(resolveGuixuOutcome());
+
+    document.getElementById("guixuzi").onclick=()=>{state.guixuziClicks++;if(state.guixuziClicks>=7)document.getElementById("guixuziText").textContent="归墟子：你其实一直知道，这些谜题是我布的，也是你选的。"};
+    window.addEventListener("keydown",e=>{state.konami+=({ArrowUp:"↑",ArrowDown:"↓",ArrowLeft:"←",ArrowRight:"→"}[e.key]||"");if(state.konami.includes("↑↑↓↓←→←→")){const p=document.getElementById("pixels");p.classList.add("show");p.innerHTML=Array.from({length:12},()=>'<span class="pixel"></span>').join("");}});
+    let pressTimer;document.getElementById("longPress").addEventListener("pointerdown",()=>pressTimer=setTimeout(()=>alert("谨以此篇，献给所有相信故事可以改变世界的玩家。"),1200));document.getElementById("longPress").addEventListener("pointerup",()=>clearTimeout(pressTimer));
+    update();opening();
+  </script>
+  <script>
+    drawThread = function(){
+      tc.clearRect(0,0,760,360);
+      const bg=tc.createLinearGradient(0,0,760,360);bg.addColorStop(0,"#08040d");bg.addColorStop(.5,"#1c0a24");bg.addColorStop(1,"#06030b");tc.fillStyle=bg;tc.fillRect(0,0,760,360);
+      tc.save();tc.globalAlpha=.22;tc.strokeStyle="#d1a85a";for(let r=42;r<220;r+=31){tc.beginPath();tc.ellipse(380,174,r*1.48,r*.72,0,0,Math.PI*2);tc.stroke()}tc.restore();
+      tc.save();tc.translate(380,172);tc.strokeStyle="rgba(209,168,90,.6)";tc.lineWidth=8;tc.beginPath();tc.arc(0,0,86,0,Math.PI*2);tc.stroke();tc.strokeStyle="rgba(35,16,42,.96)";tc.lineWidth=20;tc.beginPath();tc.arc(0,0,67,0,Math.PI*2);tc.stroke();tc.strokeStyle="rgba(209,168,90,.48)";tc.lineWidth=2;for(let i=0;i<12;i++){tc.rotate(Math.PI/6);tc.beginPath();tc.moveTo(56,0);tc.lineTo(93,0);tc.stroke()}tc.restore();
+      const lines=[{id:"red",name:"契",color:"#d7443f",y:70},{id:"cyan",name:"缘",color:"#4fc8bd",y:132},{id:"gold",name:"职",color:"#e0b65a",y:205},{id:"purple",name:"己",color:"#9d70e0",y:270}];
+      function spool(x,y,color,label,lit){tc.save();tc.translate(x,y);tc.shadowColor=color;tc.shadowBlur=lit?18:6;tc.fillStyle="#21132a";tc.beginPath();tc.arc(0,0,21,0,Math.PI*2);tc.fill();tc.lineWidth=3;tc.strokeStyle=color;tc.stroke();tc.fillStyle=lit?"#fff0a8":color;tc.beginPath();tc.arc(0,0,8,0,Math.PI*2);tc.fill();tc.shadowBlur=0;tc.fillStyle="#eadcbd";tc.font="15px SimSun";tc.textAlign="center";tc.fillText(label,0,47);tc.restore();}
+      lines.forEach((line,i)=>{const lit=state.lines.has(line.id);tc.save();tc.strokeStyle=line.color;tc.globalAlpha=lit?1:.44;tc.lineWidth=lit?5:3;tc.shadowColor=line.color;tc.shadowBlur=lit?16:5;tc.beginPath();tc.moveTo(86,line.y);tc.bezierCurveTo(212,line.y-49+i*18,332,line.y+50-i*15,380,172);tc.bezierCurveTo(462,line.y-58+i*13,570,line.y+48-i*20,674,line.y+4);tc.stroke();tc.restore();spool(70,line.y,line.color,line.name,lit);spool(690,line.y+4,line.color,line.name,lit);});
+      tc.fillStyle="rgba(244,220,157,.68)";tc.textAlign="center";tc.font="16px SimSun";tc.fillText("司命台只记下你亲手理顺的线。",380,334);
+    };
+    document.querySelectorAll("[data-line]").forEach(button=>button.addEventListener("click",()=>requestAnimationFrame(drawThread)));
+    drawThread();
+    document.getElementById("bellows").addEventListener("click",()=>document.querySelector(".tree-scene").classList.add("lit"));
+  </script>
+  <script src="js/exploration-expansion.js"></script>
+  <script src="js/arg-field-recorder.js"></script>
+</body>
+</html>

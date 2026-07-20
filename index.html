@@ -3,155 +3,23 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>五行风水录</title>
-  <link rel="stylesheet" href="css/style.css">
-  <script src="js/main.js" defer></script>
+  <meta name="theme-color" content="#101411">
+  <title>异闻档案库</title>
+  <link rel="stylesheet" href="assets/portal.css">
+  <script src="assets/portal.js" defer></script>
 </head>
 <body>
-  <div id="container">
-    <header>
-      <h1 id="logo"><a href="index.html"><img src="images/logo.png" alt="五行风水录"></a></h1>
-      <div id="header-box">
-        <form id="search-form" action="search-results.html" method="get">
-          <input type="text" id="search-input" name="q" placeholder="搜索内容...">
-          <button type="submit">搜索</button>
-        </form>
-      </div>
+  <main class="library-shell">
+    <header class="library-header">
+      <p class="archive-id">FIELD ARCHIVE / PUBLIC TERMINAL</p>
+      <h1>异闻档案库</h1>
+      <p class="library-summary">已归档的互动事件</p>
     </header>
-    <div id="menubar">
-      <nav><ul>
-        <li><a href="index.html" class="active">首页</a></li>
-        <li><a href="articles.html">风水旧稿</a></li>
-        <li><a href="archive.html">旧物档案</a></li>
-        <li><a href="timetower.html">网页时光塔</a></li>
-        <li><a href="javascript:void(0);" onclick="showMaintenanceAlert();">合婚帖库</a></li>
-        <li><a href="about.html">关于</a></li>
-      </ul></nav>
-    </div>
-    <div id="contents">
-      <main>
-        <section>
-          <div class="container"><p>小站简介</p></div>
-          <div class="news-list-container">
-            <ul class="new-parts1">
-              <li>本站收录民俗学者陈五行公开发表的风水科普、乡野笔记与旧历摘录，内容仅供研究民间信仰与地方习俗使用。</li>
-              <li>近期因资料迁移，部分页面索引异常，若搜索结果出现“禁止访问”，请以页面提示为准。</li>
-              <li>旧站备份地址：北京市净念区 安泰路与兴旺街交叉口 安泰小区二期 6 号楼 101 室旧宅。</li>
-              <li class="contact-info">站务邮箱：chenwuxing-archive@example.invalid&nbsp;&nbsp;&nbsp;&nbsp;最后同步：癸卯年七月十五</li>
-            </ul>
-          </div>
-        </section>
-        <section class="recovery-section" aria-label="本地缓存恢复记录">
-          <div class="recovery-console" id="recoveryConsole">
-            <div class="recovery-console-head">
-              <div>
-                <span class="recovery-kicker">RECOVERY SESSION / CHEN-WUXING-ARCHIVE</span>
-                <h2>本地缓存恢复记录</h2>
-              </div>
-              <p class="recovery-integrity" id="recoveryIntegrity">索引校验中</p>
-            </div>
-            <div class="recovery-records">
-              <a class="recovery-record" href="articles.html" data-signal="draft">
-                <span class="record-id">REC-02</span>
-                <span class="record-copy"><b>风水旧稿镜像</b><small>最后写入：癸卯年七月十五</small></span>
-                <em data-recovery-state="draft">未核验</em>
-              </a>
-              <a class="recovery-record" href="search-results.html?q=合婚帖" data-signal="wedding">
-                <span class="record-id">REC-11</span>
-                <span class="record-copy"><b>A-031 检索残页</b><small>索引词被人为替换过一次</small></span>
-                <em data-recovery-state="wedding">未检索</em>
-              </a>
-              <a class="recovery-record" href="timetower.html" data-signal="snapshot">
-                <span class="record-id">REC-19</span>
-                <span class="record-copy"><b>历史快照服务</b><small>三份页面回声的时间戳互不相同</small></span>
-                <em data-recovery-state="snapshot">待比对</em>
-              </a>
-              <a class="recovery-record" href="about.html" data-signal="blank">
-                <span class="record-id">REC-04</span>
-                <span class="record-copy"><b>作者资料空白区</b><small>恢复程序跳过了 160px 的内容</small></span>
-                <em data-recovery-state="blank">数据缺失</em>
-              </a>
-            </div>
-            <div class="recovery-footer">
-              <span>CRC: <b id="recoveryCrc">A9-17-00</b></span>
-              <span id="recoveryWhisper">有一条索引正在等待被重新命名。</span>
-            </div>
-          </div>
-        </section>
-        <div class="slide5-parts">
-          <div class="slide-parts"><img src="images/home-study.png" alt="陈五行书房中的罗盘、旧稿与油灯" width="2048" height="1152" fetchpriority="high"></div>
-          <div class="slide-parts"><img src="images/home-wedding-note.png" alt="合婚帖、朱砂印与红线的旧物照片" width="2048" height="1152" loading="lazy"></div>
-          <div class="slide-parts"><img src="images/home-old-house.png" alt="雨后的陈家旧宅巷口" width="2048" height="1152" loading="lazy"></div>
-          <div class="slide-indicators-parts"></div>
-        </div>
-        <section>
-          <div class="container"><p>未解封卷宗</p></div>
-          <div class="chapter-grid">
-            <a class="chapter-card" href="chapter2-contract.html" data-chapter="2">
-              <span>贰</span>
-              <h2>阴司债</h2>
-              <p>陈家血契被判官压入旧档，玩家需找出非自愿签押、医疗记录与叁柒证词，决定债是否还该由活人偿还。</p>
-              <small>异常记录：灰仓重量与销毁簿不符</small>
-            </a>
-            <a class="chapter-card" href="chapter3-forgotten-river.html" data-chapter="3">
-              <span>叁</span>
-              <h2>忘川渡·昆仑篇</h2>
-              <p>青绡、羿清、西王母与蟠桃核互相遮蔽真相。三生石、旧伞铺与九重封印塔共同组成昆仑迷案。</p>
-              <small>异常记录：一枚玉牌的背面被人刻意磨损</small>
-            </a>
-            <a class="chapter-card" href="chapter4-guixu-zhulong.html" data-chapter="4">
-              <span>肆</span>
-              <h2>归墟·烛龙</h2>
-              <p>烛龙闭眼后，因果分岔开始坍缩。你要在星宿、卷轴、司命台与心室问答里判断谁能承受因果。</p>
-              <small>异常记录：星图上的红线正在缓慢合拢</small>
-            </a>
-            <a class="chapter-card" href="chapter5-bagua-guiyuan.html" data-chapter="5">
-              <span>伍</span>
-              <h2>道劫·八卦归元</h2>
-              <p>情卦是否应入天道，是最后一重问题。坎、坤、震、巽、乾、离六门完成后，归元子才会作答。</p>
-              <small>异常记录：归元炉灰中夹着未烧尽的纸纤维</small>
-            </a>
-          </div>
-        </section>
-        <section>
-          <div class="container"><p>调查员便笺</p></div>
-          <div class="case-board">
-            <div>
-              <h2>已确认线索链</h2>
-              <ol class="thread-list">
-                <li><b>旧稿</b>给出五行相生顺序：木、火、土、金、水。</li>
-                <li><b>合婚帖</b>给出苏婉八字，日柱与时柱可换成四位数字。</li>
-                <li><b>关于页源码</b>留下陈五行本人注释，说明“八字不是故事，是钥匙”。</li>
-                <li><b>里世界</b>会检查玩家是否真正读过资料，而不是直接跳谜题。</li>
-              </ol>
-            </div>
-            <div class="status-ledger">
-              <h2>异常页码</h2>
-              <p><b>01/36</b> 首页备份正常，但轮播图第三张底部有水渍痕。</p>
-              <p><b>04/36</b> 关于页存在不可见空白，光标经过时字体像被朱砂染过。</p>
-              <p><b>17/36</b> 判官档案在凌晨刷新过一次，服务器日志没有对应请求。</p>
-              <p><b>36/36</b> 归元终局后仍会保留一条未归档留言。</p>
-            </div>
-          </div>
-        </section>
-        <section>
-          <div class="container"><p>最新公告</p></div>
-          <div class="news-list-container">
-            <dl class="new-parts1">
-              <dt>2025/03/14</dt><dd>新增旧稿《中元节前后，宅中灯火不宜久暗》。文中涉及旧历禁忌，请勿断章引用。</dd>
-              <dt>2025/02/08</dt><dd>站内检索功能恢复。旧档案关键词可能存在错别字、别名与阴历写法，请尝试搜索人名、日期或物件。</dd>
-              <dt>2025/01/26</dt><dd>合婚帖库维护中。管理员提示：若页面无法打开，请先搜索“合婚帖”。</dd>
-              <dt>2025/01/13</dt><dd>关于页资料已补录。陈五行本人最后一次编辑停在一段空白之后。</dd>
-              <dt>2025/01/01</dt><dd>五行风水录旧站备份上线。</dd>
-            </dl>
-          </div>
-        </section>
-      </main>
-    </div>
-  </div>
-  <footer><small><span class="first-line">本网站内容为虚构 ARG 游戏作品，与任何真实人物、团体或事件无关</span><span class="second-line">Copyright&copy; 陈五行旧站备份. All Rights Reserved.&nbsp;&nbsp;&nbsp;01/36</span></small></footer>
-  <div class="pagetop"><a href="#">▲</a></div>
-  <button id="menubar_hdr" type="button" aria-label="打开站点导航" aria-expanded="false"><span></span><span></span><span></span></button>
-  <script src="js/exploration-expansion.js"></script>
+    <section class="catalog" aria-live="polite">
+      <div class="catalog-heading"><h2>选择事件</h2><p id="catalogCount">读取目录中</p></div>
+      <div class="game-grid" id="gameGrid"></div>
+      <p class="catalog-error" id="catalogError" hidden>目录读取失败。</p>
+    </section>
+  </main>
 </body>
 </html>

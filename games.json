@@ -1,0 +1,12 @@
+{
+  "games": [
+    {
+      "caseId": "CASE 01 / WUXING-ARCHIVE",
+      "title": "纸人煞",
+      "summary": "一封定时邮件、一座旧站与一场尚未结束的还魂仪式。",
+      "entry": "games/zhirensha/prologue.html",
+      "cover": "games/zhirensha/images/zhirensha-promo-keyart.png",
+      "coverAlt": "纸人煞的归档事件画面"
+    }
+  ]
+}

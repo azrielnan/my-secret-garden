@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>阳世扎纸匠契约录</title>
+  <script src="js/main.js" defer></script>
+  <style>
+    /*
+      第二章：阳世扎纸匠契约录
+      维护入口：
+      1. 结局开关在 JS 的 ENDING_FLAGS。
+      2. 关键证据在 JS 的 evidence。
+      3. 谜题答案在 JS 的 PUZZLE_CONFIG。
+      4. 判官批注、青衣提示、结局文本均可直接改 JS 文案。
+    */
+    :root {
+      --bg: #050505;
+      --panel: #0d0c0a;
+      --panel-2: #15120c;
+      --gold: #8d6b2c;
+      --gold-bright: #caa45a;
+      --red: #9f1d18;
+      --red-bright: #e13b2e;
+      --text: #d8d8d0;
+      --muted: #8f8a7c;
+      --paper: #c8aa62;
+      --ink: #17120a;
+      --green: #7fbc8c;
+      --font-body: "SimSun", "宋体", serif;
+      --font-ritual: "STXingkai", "华文行楷", "KaiTi", "楷体", serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--bg); }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: var(--font-body);
+      background:
+        radial-gradient(circle at 50% 0, rgba(130, 0, 0, .18), transparent 34%),
+        linear-gradient(180deg, #080808, #020202);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .22;
+      background-image:
+        repeating-linear-gradient(90deg, rgba(202,164,90,.06) 0 1px, transparent 1px 12px),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 16px);
+      z-index: 0;
+    }
+
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .app { position: relative; z-index: 1; width: min(1440px, calc(100vw - 24px)); margin: 0 auto; padding: 18px 0 40px; }
+
+    .topbar {
+      border: 1px solid var(--gold);
+      background:
+        linear-gradient(90deg, rgba(21,18,12,.96) 0 48%, rgba(8,7,6,.72)),
+        url("images/chapter2-contract-archive.png") center / cover;
+      padding: 18px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: end;
+      box-shadow: 0 0 28px rgba(0,0,0,.55);
+    }
+
+    .title-block h1 {
+      margin: 0;
+      font-family: var(--font-ritual);
+      color: #eee3c8;
+      font-size: clamp(2rem, 6vw, 4.6rem);
+      letter-spacing: 0;
+      text-shadow: 0 0 18px rgba(159,29,24,.35);
+    }
+
+    .title-block p { margin: 4px 0 0; color: var(--muted); }
+    .case-id { text-align: right; color: var(--gold-bright); font-family: Consolas, monospace; }
+
+    .mail {
+      margin-top: 14px;
+      border: 1px dashed rgba(202,164,90,.58);
+      padding: 12px 14px;
+      background: rgba(0,0,0,.28);
+      color: #c7c2b6;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 230px minmax(0, 1fr) 280px;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .nav, .side, .module {
+      border: 1px solid rgba(202,164,90,.62);
+      background: rgba(13,12,10,.94);
+      box-shadow: inset 0 0 24px rgba(0,0,0,.32);
+    }
+
+    .nav { padding: 12px; align-self: start; position: sticky; top: 10px; }
+    .nav button {
+      width: 100%;
+      min-height: 46px;
+      margin-bottom: 8px;
+      border: 1px solid rgba(202,164,90,.44);
+      color: var(--text);
+      background: #111;
+      text-align: left;
+      padding: 8px 10px;
+    }
+    .nav button.active, .nav button:hover { color: #fff; background: #2a120f; border-color: var(--red-bright); }
+
+    .module { min-height: 720px; padding: clamp(16px, 3vw, 28px); display: none; }
+    .module.active { display: block; }
+    .module h2 { margin: 0 0 14px; color: var(--gold-bright); font-family: var(--font-ritual); font-size: clamp(1.8rem, 4vw, 3rem); }
+    .module p { line-height: 1.9; }
+    .note { color: var(--muted); font-size: .95rem; }
+    .judge-note { color: var(--red-bright); font-family: var(--font-ritual); text-shadow: 0 0 12px rgba(159,29,24,.55); }
+
+    .side { padding: 14px; align-self: start; position: sticky; top: 10px; }
+    .side h3 { margin: 0 0 10px; color: var(--gold-bright); }
+    .status-list { list-style: none; padding: 0; margin: 0; }
+    .status-list li { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed rgba(202,164,90,.28); padding: 7px 0; }
+    .ok { color: var(--green); }
+    .bad { color: var(--red-bright); }
+
+    .contract-paper {
+      position: relative;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(255,239,178,.78), rgba(182,137,63,.95)),
+        repeating-linear-gradient(90deg, rgba(80,45,16,.08) 0 1px, transparent 1px 9px);
+      border: 8px double #3b170d;
+      padding: clamp(18px, 4vw, 34px);
+      min-height: 520px;
+      box-shadow: 0 12px 28px rgba(0,0,0,.42);
+    }
+
+    .contract-title { text-align: center; color: #75100d; font-family: var(--font-ritual); font-size: 2.6rem; margin: 0 0 20px; }
+    .seal { display: inline-grid; place-items: center; width: 78px; aspect-ratio: 1; background: rgba(132,14,12,.86); color: #f7d9a0; border: 4px double #f0c77d; transform: rotate(-8deg); margin-left: 10px; }
+    .blot {
+      display: inline-block;
+      min-width: 110px;
+      height: 1.25em;
+      vertical-align: middle;
+      color: transparent;
+      background: radial-gradient(circle, #0b0907 0 52%, #17110a 53% 100%);
+      border-radius: 45%;
+      transition: opacity .35s ease, color .35s ease, background .35s ease;
+      user-select: none;
+    }
+    .blot.revealed { color: #75100d; background: transparent; font-weight: bold; }
+    .tools { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
+    .gold-btn {
+      border: 1px solid var(--gold-bright);
+      color: #f7dfad;
+      background: linear-gradient(180deg, #5a4017, #161008);
+      padding: 9px 14px;
+    }
+    .red-btn { border-color: var(--red-bright); background: linear-gradient(180deg, #6f1511, #1a0605); }
+
+    .tree { display: grid; gap: 16px; justify-items: center; margin-top: 20px; }
+    .tree-row { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; width: 100%; }
+    .person {
+      min-width: 150px;
+      border: 3px double rgba(202,164,90,.72);
+      background: #18130d;
+      padding: 12px;
+      color: #eee3c8;
+      text-align: center;
+      position: relative;
+    }
+    .person::after { content: ""; position: absolute; left: 50%; top: 100%; height: 18px; border-left: 2px solid rgba(202,164,90,.5); }
+    .person:last-child::after { display: none; }
+    .stamp-node { display: block; margin-top: 6px; color: #fff; background: var(--red); padding: 2px 6px; }
+
+    .workbench {
+      background: radial-gradient(circle at 50% 8%, rgba(177,123,42,.22), transparent 38%), radial-gradient(circle at 50% 80%, rgba(125,29,20,.2), transparent 34%), #120c07;
+      border: 1px solid rgba(202,164,90,.58);
+      padding: 16px;
+    }
+    .materials { display: grid; grid-template-columns: repeat(5, minmax(80px, 1fr)); gap: 10px; }
+    .material { position: relative; min-height: 76px; overflow: hidden; border: 1px solid var(--gold); background: linear-gradient(135deg, #2c1d0d, #100a05); color: #eed9a4; text-shadow: 0 1px 2px #000; box-shadow: inset 0 0 0 1px rgba(255,226,137,.06), 0 6px 12px rgba(0,0,0,.18); }
+    .material::before { content: ""; position: absolute; inset: 7px; border: 1px solid rgba(202,164,90,.24); background: repeating-linear-gradient(90deg, rgba(240,201,116,.04) 0 1px, transparent 1px 7px); pointer-events: none; }
+    .material::after { content: ""; position: absolute; left: 50%; bottom: 7px; width: 26px; height: 2px; translate: -50% 0; background: var(--red); box-shadow: 0 0 9px rgba(225,59,46,.52); opacity: .54; }
+    .material:hover { border-color: var(--gold-bright); translate: 0 -2px; }
+    .material.done { background: linear-gradient(135deg, #38401e, #11170e); color: #dcffd0; border-color: #9fc981; box-shadow: inset 0 0 20px rgba(174,230,142,.14), 0 0 18px rgba(159,201,129,.14); }
+    .paper-man { width: 212px; height: 290px; margin: 18px auto 10px; position: relative; isolation: isolate; animation: float 3s ease-in-out infinite; filter: drop-shadow(0 18px 18px rgba(0,0,0,.52)); }
+    .paper-man::before { content: ""; position: absolute; z-index: 0; left: 50%; top: 36px; width: 164px; height: 214px; translate: -50% 0; border-radius: 50%; background: radial-gradient(ellipse, rgba(214,163,67,.26), transparent 68%); filter: blur(9px); }
+    .paper-man::after { content: ""; position: absolute; z-index: 3; left: 50%; bottom: 8px; width: 82px; height: 10px; translate: -50% 0; border-radius: 50%; background: rgba(0,0,0,.52); filter: blur(5px); }
+    .paper-head { position: absolute; z-index: 3; left: 50%; top: 12px; width: 78px; height: 78px; translate: -50% 0; border: 4px double #81311e; border-radius: 48% 48% 43% 43%; background: radial-gradient(circle at 35% 26%, #fff0b7 0 8%, transparent 9%), radial-gradient(circle at 65% 26%, #fff0b7 0 8%, transparent 9%), linear-gradient(180deg, #f1d98e, #c9984d); box-shadow: inset 0 -13px 18px rgba(92,45,20,.18), 0 0 18px rgba(224,176,76,.22); }
+    .paper-head::after { content: ""; position: absolute; left: 18px; right: 18px; top: 42px; height: 10px; border-bottom: 2px solid #7d251b; border-radius: 0 0 50% 50%; }
+    .paper-body { position: absolute; z-index: 2; left: 50%; bottom: 18px; width: 150px; height: 196px; translate: -50% 0; clip-path: polygon(50% 0, 76% 12%, 94% 92%, 74% 100%, 26% 100%, 6% 92%, 24% 12%); background: linear-gradient(90deg, #b27d35, #f0cf74 48%, #b27d35); border: 3px solid #7d251b; box-shadow: inset 0 0 0 8px rgba(83,42,18,.14), inset 0 -25px 28px rgba(78,36,14,.22); }
+    .paper-body::before { content: ""; position: absolute; inset: 18px 24px 28px; background: linear-gradient(90deg, transparent 48%, rgba(125,37,27,.72) 49% 51%, transparent 52%), repeating-linear-gradient(0deg, transparent 0 24px, rgba(125,37,27,.3) 25px 27px); }
+    .paper-arm { position: absolute; z-index: 1; top: 110px; width: 90px; height: 18px; background: linear-gradient(#d8b45d, #8d5e2c); border: 2px solid #7d251b; }
+    .paper-arm.left { left: 14px; rotate: 28deg; transform-origin: right center; }.paper-arm.right { right: 14px; rotate: -28deg; transform-origin: left center; }
+    .paper-seal { position: absolute; z-index: 4; left: 50%; top: 145px; width: 42px; height: 52px; translate: -50% 0; border: 1px solid #e7c771; background: linear-gradient(180deg, #f5dd8c, #c99142); color: #871d16; font: 20px/50px var(--font-ritual); text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,.32); }
+    .paper-man[data-soul="awake"] .paper-head { box-shadow: 0 0 22px rgba(184,239,163,.78), inset 0 -13px 18px rgba(92,45,20,.18); }.paper-man[data-soul="awake"] .paper-seal { border-color: #c8f0bc; color: #355b31; }.paper-man[data-soul="bound"] { filter: grayscale(.24) drop-shadow(0 18px 18px rgba(0,0,0,.52)); }
+    canvas { display:block; width:100%; max-width: 100%; background: #c8aa62; border: 1px solid var(--gold); box-shadow: inset 0 0 30px rgba(0,0,0,.22), 0 12px 24px rgba(0,0,0,.2); }
+
+    .echo-wall { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+    .echo { min-height: 120px; padding: 14px; border: 1px solid rgba(202,164,90,.48); background: #111; color: transparent; text-shadow: 0 0 12px rgba(216,216,208,.55); }
+    .echo:hover { color: var(--text); text-shadow: none; }
+    .poster { margin-top: 16px; padding: 16px; background: #20160b; border: 1px solid var(--gold); }
+    .hover-seven { color: var(--red-bright); position: relative; cursor: help; }
+    .hover-seven:hover::after { content: "夫人最爱的戏文首演日：1937-07-15"; position: absolute; left: 0; top: 1.8em; min-width: 260px; background: #000; border: 1px solid var(--red); padding: 8px; color: #fff; z-index: 3; }
+
+    .spirit {
+      border: 1px solid rgba(202,164,90,.52);
+      padding: 12px;
+      background: radial-gradient(circle at 50% 22%, rgba(127,188,140,.12), transparent 34%), #0b0b0b;
+      margin-bottom: 14px;
+    }
+    .qingyi { width: 148px; height: 196px; margin: 6px auto 14px; position:relative; isolation:isolate; animation: float 4s ease-in-out infinite; filter: drop-shadow(0 16px 18px rgba(0,0,0,.5)); }
+    .qingyi::before { content:""; position:absolute; z-index:1; left:50%; top:4px; width:64px; height:68px; translate:-50% 0; border:3px solid #66724d; border-radius:46% 46% 42% 42%; background:radial-gradient(circle at 35% 34%, #fff8d8 0 5%, transparent 6%), radial-gradient(circle at 65% 34%, #fff8d8 0 5%, transparent 6%), linear-gradient(180deg,#e7e5bd,#aab184); box-shadow:inset 0 -9px 12px rgba(42,48,29,.18),0 0 16px rgba(160,199,142,.18); }
+    .qingyi::after { content:""; position:absolute; z-index:0; left:50%; bottom:0; width:134px; height:148px; translate:-50% 0; clip-path:polygon(50% 0,76% 13%,94% 100%,6% 100%,24% 13%); background:linear-gradient(90deg,#5c7656,#c5d0a0 47%,#5f7958); border:2px solid #52644b; box-shadow:inset 0 0 0 10px rgba(225,236,179,.09),inset 0 -24px 24px rgba(26,39,26,.22); }
+    .qingyi .qingyi-sleeve { position:absolute; z-index:2; top:86px; width:72px; height:40px; border:2px solid #52644b; background:linear-gradient(180deg,#b9c99a,#657d5d); }.qingyi .qingyi-sleeve.left{left:0;clip-path:polygon(0 16%,100% 0,72% 100%,0 88%)}.qingyi .qingyi-sleeve.right{right:0;clip-path:polygon(0 0,100% 16%,100% 88%,28% 100%)}
+    .qingyi .qingyi-crane { position:absolute; z-index:3; left:50%; top:98px; width:34px; height:44px; translate:-50% 0; rotate:-8deg; border:1px solid rgba(255,247,198,.8); background:linear-gradient(135deg,#f2e7ab 0 48%,#d1bf70 49%); clip-path:polygon(50% 0,100% 24%,72% 48%,100% 100%,50% 74%,0 100%,28% 48%,0 24%); box-shadow:0 0 12px rgba(227,236,183,.28); }
+    .qingyi[data-mood="trusted"]::before { box-shadow:0 0 24px rgba(180,245,170,.5), inset 0 -9px 12px rgba(42,48,29,.18); }.qingyi[data-mood="angry"] { filter:sepia(.48) hue-rotate(315deg) drop-shadow(0 16px 18px rgba(0,0,0,.5)); }
+    .paper-man { width: min(100%, 286px); height: 330px; margin: 10px auto -8px; background: url("images/chapter2-paper-effigy.png") center / contain no-repeat; filter: drop-shadow(0 18px 22px rgba(0,0,0,.58)); }
+    .paper-man > span { display: none; }
+    .paper-man::before { left: 50%; top: 48px; width: 212px; height: 232px; background: radial-gradient(ellipse, rgba(220,171,74,.18), transparent 70%); }
+    .paper-man[data-soul="awake"] { filter: drop-shadow(0 0 17px rgba(180,239,163,.48)) drop-shadow(0 18px 22px rgba(0,0,0,.58)); }
+    .paper-man[data-soul="bound"] { filter: grayscale(.25) brightness(.8) drop-shadow(0 18px 22px rgba(0,0,0,.58)); }
+    .qingyi { width: min(100%, 190px); height: 238px; margin: -4px auto -14px; background: url("images/chapter2-qingyi-spirit.png") center / contain no-repeat; filter: drop-shadow(0 15px 18px rgba(0,0,0,.58)); }
+    .qingyi > span, .qingyi::before, .qingyi::after { display: none; }
+    .qingyi[data-mood="trusted"] { filter: drop-shadow(0 0 17px rgba(180,245,170,.38)) drop-shadow(0 15px 18px rgba(0,0,0,.58)); }
+    .typeout { min-height: 5.5em; white-space: pre-wrap; color: #cfd9c7; }
+
+    .decision { margin-top: 18px; border-top: 1px solid rgba(202,164,90,.34); padding-top: 14px; }
+    .ending {
+      margin-top: 14px;
+      border: 1px solid var(--red);
+      background: #100605;
+      padding: 18px;
+      white-space: pre-wrap;
+      line-height: 1.9;
+    }
+    .investigation-guide {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border: 1px solid rgba(202,164,90,.5);
+      background: linear-gradient(90deg, rgba(127,188,140,.08), transparent 72%);
+      color: #d9d4c7;
+      line-height: 1.75;
+    }
+    .investigation-guide b { color: var(--gold-bright); font-family: var(--font-ritual); }
+    .continuation {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px dashed rgba(202,164,90,.5);
+      white-space: normal;
+      color: #d8d8d0;
+    }
+    .continuation a { display: inline-block; margin-top: 8px; color: #e8d7a6; border: 1px solid var(--gold-bright); padding: 8px 12px; text-decoration: none; background: rgba(70,45,13,.42); }
+    .continuation a:hover { border-color: var(--red-bright); color: #fff1ca; }
+
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } .nav, .side { position: static; } .materials { grid-template-columns: repeat(2, 1fr); } .topbar { grid-template-columns: 1fr; } .case-id { text-align: left; } }
+  </style>
+</head>
+<body>
+  <!-- 判官批注：墨污显影用 Ctrl+Alt+Y。若浏览器拦截快捷键，也可连续点击“阴符显影”三次。 -->
+  <!-- 陆斩批注原文：本契有旧涂改，非档案司主动涂抹。查陈守一之女病历、役鬼叁柒证词、契约原本墨污，可成抗辩。 -->
+  <div class="app">
+    <header class="topbar">
+      <div class="title-block">
+        <h1>阳世扎纸匠契约录</h1>
+        <p>酆都阴司档案司 · 第七殿录事判官陆斩 · 跨阴阳查询界面</p>
+      </div>
+      <div class="case-id">CASE: CHEN-1874-ZZ<br>ACCESS: LIVING-WITNESS</div>
+    </header>
+
+    <section class="mail">
+      <b>前作衔接：</b>三个月前，你破解陈五行的“纸人新娘”迷局，苏婉真魂解脱，陈五行与其共同往生。纸人世界留下的余波触动了陈家与阴司的旧契。今日，你收到一封无字邮件，链接指向此系统。判官陆斩要你在“代偿”与“抗辩”之间选择。
+      <p>这一次，没有纸嫁衣、没有旧宅红烛，也没有陈五行颤抖的求救声。邮件像一张从地底寄来的公文，冷得没有半点人味。系统识别你为“上一劫见证人”，却没有称你为学生，也没有称你为活人，只在身份栏里写着：<b>可追责关系人</b>。</p>
+      <p>陆斩给出的规则很简单：陈家的纸人脱逃了，旧债仍在。若你不能证明百年前的血契并非自愿，阴司就会把这笔债转到仍能开口、仍能打字、仍知道真相的你身上。</p>
+      <div class="tools">
+        <button class="gold-btn" id="verifyPrevious">读取上一劫结案记录</button>
+      </div>
+      <p id="previousResult" class="judge-note">档案司尚未确认你是否为上一劫见证人。</p>
+      <div class="investigation-guide" id="investigationGuide"><b>案卷指引：</b>阴契不按目录说话。先找谁在说谎，再找谁被迫沉默。</div>
+    </section>
+
+    <main class="layout">
+      <nav class="nav" aria-label="档案模块">
+        <button class="active" data-module="contract">壹 · 契约正本</button>
+        <button data-module="lineage">贰 · 匠人谱系</button>
+        <button data-module="workshop">叁 · 役鬼工坊</button>
+        <button data-module="echo">肆 · 残魂回音壁</button>
+        <button data-module="judgement">伍 · 终局判定</button>
+      </nav>
+
+      <section class="module active" id="contract">
+        <h2>契约正本</h2>
+        <p class="judge-note">陆斩批注：活人无权翻阅阴契。你能看见，是因为上一劫有人替你开了门。</p>
+        <div class="tools">
+          <button class="gold-btn" id="revealInk">阴符显影</button>
+          <input id="clerkCode" placeholder="录事吏暗号">
+          <button class="gold-btn" id="recordAlteration">登记涂改痕迹</button>
+        </div>
+        <p class="note">系统缺少录事签。旧物档案的 <a href="secret/recovered-ledger.html#B-037">B-037 补卷</a> 或许还留着当年的值守标记。</p>
+        <article class="contract-paper">
+          <h3 class="contract-title">阳世扎纸匠役鬼供造契</h3>
+          <p>陈氏纸匠一脉，自守一始，愿为阴司扎制役鬼纸人三千。每代承债，不得拒造，不得毁约。</p>
+          <p>若违，则折阳寿，祸妻儿，累及三世。血印为凭 <span class="seal">陈<br>血</span></p>
+          <p>契约附注：役鬼纸人不得有名，不得有梦，不得记得生前路。若纸人自生灵识，应即刻销毁，不入轮回，不记功德。</p>
+          <p>供造期限：每逢中元开簿，每十年清点一次。未交之数，自动归入下一代阳寿。</p>
+          <p>签立情形：<span class="blot">此契非自愿</span>，<span class="blot">乃以药迷神智后强按血印</span>。</p>
+          <p>见证：第七殿录事吏，押。阳世中保人，缺名。</p>
+          <p>边角残字：守一求的不是富贵，是女儿一口气。阴司许的是命，收的是世代。</p>
+        </article>
+      </section>
+
+      <section class="module" id="lineage">
+        <h2>匠人谱系</h2>
+        <p>点击节点查看记录。陈守一最初被系统标为“违约”，若证据完整可改判为“受迫”。</p>
+        <div class="tree">
+          <div class="tree-row"><button class="person" data-person="shouyi">陈守一<span class="stamp-node" id="shouyiStatus">违约</span></button></div>
+          <div class="tree-row"><button class="person" data-person="daughter">陈月娘<span class="stamp-node">病危</span></button><button class="person" data-person="wuxing">陈五行<span class="stamp-node">已往生</span></button></div>
+          <div class="tree-row"><button class="person" data-person="suwan">苏婉<span class="stamp-node">真魂解脱</span></button></div>
+        </div>
+        <div id="personDetail" class="mail">点击谱系节点查看。</div>
+      </section>
+
+      <section class="module" id="workshop">
+        <h2>役鬼工坊</h2>
+        <p class="judge-note">陆斩批注：若你愿代偿，先做一个样品。若你要抗辩，也得先修好叁柒的嘴。</p>
+        <div class="workbench">
+          <p>工坊墙上写着一句旧规：先立骨，后披衣；朱先醒，钉后缚，最后封口。材料顺序不写在按钮上。</p>
+          <div class="materials" id="materials"></div>
+          <div class="paper-man" id="paperMan" aria-label="等待点魂的役鬼纸人">
+            <span class="paper-arm left" aria-hidden="true"></span><span class="paper-arm right" aria-hidden="true"></span>
+            <span class="paper-head" aria-hidden="true"></span><span class="paper-body" aria-hidden="true"></span><span class="paper-seal" aria-hidden="true">役</span>
+          </div>
+          <div class="tools">
+            <button class="gold-btn" id="makePerfect">制作完美役鬼</button>
+            <button class="gold-btn red-btn" id="makeSentient">留下自主缺陷</button>
+          </div>
+        </div>
+        <h3>修复叁柒符纸</h3>
+        <p class="note">拖动碎片到虚线框。修复完成后可获得签约现场证词。</p>
+        <canvas id="puzzle" width="620" height="300"></canvas>
+      </section>
+
+      <section class="module" id="echo">
+        <h2>残魂回音壁</h2>
+        <div class="echo-wall">
+          <div class="echo">陈守一：我按下血印时，手不是我的手。药味像苦杏仁。月娘在里屋喘气，我听见她叫爹，可堂上的人只催我按印。</div>
+          <div class="echo">守一妻：他回来那夜，袖口全是朱砂。我问他女儿能不能活，他说能，可我们陈家从此不能算活人了。</div>
+          <div class="echo">叁柒：我记得堂上有人说，救女儿可以，债要子孙还。另一个声音说，别让他清醒，清醒的人不会答应。</div>
+          <div class="echo">青衣：一三五七九，单数门前走；前朝旧债数，减去今夕愁。你若听不懂，就先别骂我，我只是纸脑袋。</div>
+        </div>
+        <div class="poster">
+          旧戏海报：《阴阳桥》首演于民国廿六年七月十五。夫人最爱的戏文，是第 <span class="hover-seven">七</span> 场。旧历换公历，需自己查年份。
+        </div>
+        <div class="tools">
+          <input id="dateInput" placeholder="输入首演日，例如 1937-07-15">
+          <button class="gold-btn" id="unlockEcho">调取录音碎片</button>
+        </div>
+        <p id="echoResult" class="judge-note"></p>
+      </section>
+
+      <section class="module" id="judgement">
+        <h2>归档呈递</h2>
+        <p>判官陆斩要求你提交最终案卷。档案司不会说明判词如何生成，只会记录你已经做过的事、遗漏的证据，以及你如何对待那些本不该开口的纸。</p>
+        <div class="decision">
+          <button class="gold-btn" id="submitCase">封存案卷</button>
+        </div>
+        <div class="ending" id="endingText">案卷尚未归档。</div>
+      </section>
+
+      <aside class="side">
+        <div class="spirit">
+          <h3>纸灵 · 青衣</h3>
+          <div class="qingyi" id="qingyi" aria-label="纸灵青衣"><span class="qingyi-sleeve left" aria-hidden="true"></span><span class="qingyi-sleeve right" aria-hidden="true"></span><span class="qingyi-crane" aria-hidden="true"></span></div>
+          <div class="typeout" id="qingyiText">青衣正在模仿活人打字……</div>
+          <div class="tools">
+            <button class="gold-btn" id="helpQingyi">帮她找纸鹤</button>
+            <button class="gold-btn red-btn" id="scoldQingyi">斥责她</button>
+          </div>
+        </div>
+        <h3>调查状态</h3>
+        <ul class="status-list" id="statusList"></ul>
+        <h3>判官批注</h3>
+        <p class="judge-note" id="judgeNote">陆斩：活人，证明你的用处。</p>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    const ENDING_FLAGS = {
+      enableEndingA: true,
+      enableEndingB: true,
+      enableEndingC: true,
+      enableHiddenD: true
+    };
+
+    <!-- 录事吏暗号：第七殿。首演日藏在旧戏海报，民国廿六年为 1937 年。 -->
+    const PUZZLE_CONFIG = {
+      inkShortcut: "Ctrl+Alt+Y",
+      echoDate: "1937-07-15",
+      clerkCode: "第七殿",
+      materialOrder: ["竹篾", "黄纸", "朱砂", "魂钉", "封符"]
+    };
+
+    const state = {
+      evidence: { medical: false, testimony: false, alteration: false },
+      qingyiHelped: false,
+      qingyiAngry: false,
+      judgeWeakness: false,
+      workshopChoice: "",
+      judgeAngered: false,
+      materialStep: 0,
+      inkClicks: 0,
+      previousVerified: false
+    };
+
+    const modules = document.querySelectorAll(".module");
+    const navButtons = document.querySelectorAll(".nav button");
+    const statusList = document.getElementById("statusList");
+    const judgeNote = document.getElementById("judgeNote");
+    const qingyiText = document.getElementById("qingyiText");
+    let explorationEffects={};
+    try { explorationEffects=JSON.parse(localStorage.getItem("zhirensha.explore.effects")||"{}"); } catch { explorationEffects={}; }
+    if(explorationEffects.confession){
+      document.getElementById("previousResult").insertAdjacentHTML("afterend", '<p class="note">老宅补遗已归档：陈守一忏悔信证明他签印前曾试图求援。它不能替代病历与证词，却让陆斩第一次承认，此案不该只按债数计。</p>');
+    }
+
+    function switchModule(id) {
+      modules.forEach(m => m.classList.toggle("active", m.id === id));
+      navButtons.forEach(b => b.classList.toggle("active", b.dataset.module === id));
+      addAsh();
+    }
+
+    navButtons.forEach(button => button.addEventListener("click", () => switchModule(button.dataset.module)));
+
+    function updateStatus() {
+      const complete = state.evidence.medical && state.evidence.testimony && state.evidence.alteration;
+      document.getElementById("shouyiStatus").textContent = complete ? "受迫" : "违约";
+      statusList.innerHTML = `
+        <li><span>上一劫卷宗</span><b class="${state.previousVerified ? "ok" : "bad"}">${state.previousVerified ? "已校验" : "未校验"}</b></li>
+        <li><span>医疗记录</span><b class="${state.evidence.medical ? "ok" : "bad"}">${state.evidence.medical ? "已收集" : "缺失"}</b></li>
+        <li><span>叁柒证词</span><b class="${state.evidence.testimony ? "ok" : "bad"}">${state.evidence.testimony ? "已收集" : "缺失"}</b></li>
+        <li><span>契约涂改</span><b class="${state.evidence.alteration ? "ok" : "bad"}">${state.evidence.alteration ? "已收集" : "缺失"}</b></li>
+        <li><span>青衣态度</span><b>${state.qingyiHelped ? "信任" : state.qingyiAngry ? "敌意" : "观望"}</b></li>
+        <li><span>工坊成品</span><b>${state.workshopChoice || "未完成"}</b></li>
+      `;
+      updateInvestigationGuide(complete);
+    }
+
+    function updateInvestigationGuide(complete) {
+      const guide = document.getElementById("investigationGuide");
+      if (!state.evidence.alteration) {
+        guide.innerHTML = "<b>案卷指引：</b>血契写得太干净。真正的文字，通常被藏在不愿让人辨认的地方。";
+      } else if (!state.evidence.medical) {
+        guide.innerHTML = "<b>案卷指引：</b>陈守一的名字没有答案。他签印那夜，真正被推到门槛前的是另一个人。";
+      } else if (!state.evidence.testimony) {
+        guide.innerHTML = "<b>案卷指引：</b>最后一段证词不在活人名下。去听那些被系统当作杂音的句子。";
+      } else if (!state.qingyiHelped) {
+        guide.innerHTML = "<b>案卷指引：</b>三份证物已经能够证明疑点。卷宗边缘还有一只没有署名的纸鹤。";
+      } else if (!state.workshopChoice) {
+        guide.innerHTML = "<b>案卷指引：</b>证据链已完整。案桌另一侧的纸人还没有决定自己该像工具，还是像人。";
+      } else if (complete) {
+        guide.innerHTML = "<b>案卷指引：</b>案卷已具备判决资格。现在只剩两种写法：替旧债签字，或让证据替亡者说话。";
+      }
+    }
+
+    function setJudge(text) { judgeNote.textContent = "陆斩：" + text; }
+    function setQingyi(text) { qingyiText.textContent = text; }
+
+    document.getElementById("revealInk").addEventListener("click", () => {
+      state.inkClicks += 1;
+      if (state.inkClicks >= 3) revealInk();
+      else setJudge("阴符只显出半层。先别把缺口当成答案，案外还有一张值守单。 ");
+    });
+
+    window.addEventListener("keydown", event => {
+      if (event.ctrlKey && event.altKey && event.key.toLowerCase() === "y") revealInk();
+    });
+
+    function revealInk() {
+      document.querySelectorAll(".blot").forEach(b => b.classList.add("revealed"));
+      setJudge("你看见了不该看见的涂改。登记它，它就是证据。");
+    }
+
+    document.getElementById("recordAlteration").addEventListener("click", () => {
+      if (![...document.querySelectorAll(".blot")].every(b => b.classList.contains("revealed"))) {
+        setJudge("墨污未显，不能登记。");
+        return;
+      }
+      if (localStorage.getItem("zhirensha.arg.recoveredLedger") !== "1") {
+        setJudge("缺少 B-037 的值守签，活人无权把阴契涂改登记入卷。");
+        return;
+      }
+      if (document.getElementById("clerkCode").value.trim() !== PUZZLE_CONFIG.clerkCode) {
+        setJudge("录事吏暗号不合。比对补卷里的灰仓维护单与契约押签。");
+        return;
+      }
+      state.evidence.alteration = true;
+      setJudge("涂改痕迹已入卷。");
+      updateStatus();
+    });
+
+    document.querySelectorAll(".person").forEach(button => {
+      button.addEventListener("click", () => {
+        const detail = document.getElementById("personDetail");
+        const person = button.dataset.person;
+        if (person === "shouyi") detail.textContent = "陈守一：陈家纸匠。契约血印人。系统原判违约。他一生扎过三百七十二具纸人，却从不替纸人点眼。邻里说他怕鬼，档案却显示：他怕的不是鬼，是纸人点眼后会哭。";
+        if (person === "daughter") {
+          detail.textContent = "陈月娘：陈守一之女。签约前夜病危，医案记载其服药后脉象忽稳。医案背面有一句被水泡开的字：病人本已回阳，契约签立并非救命必要。医疗记录已收集。";
+          state.evidence.medical = true;
+        }
+        if (person === "wuxing") detail.textContent = "陈五行：上一劫当事人。为复活苏婉误扎纸人新娘，险些被拖入纸人世界。你解开迷局后，他与苏婉共同往生。档案司备注：此人虽死，仍牵动旧契。";
+        if (person === "suwan") detail.textContent = "苏婉：真魂已解。她不是陈家血脉，却因契约折寿。阴司把这类牵连称作“旁支损耗”，陆斩在旁边批了两个字：难听。";
+        updateStatus();
+      });
+    });
+
+    const materials = document.getElementById("materials");
+    PUZZLE_CONFIG.materialOrder.forEach(name => {
+      const btn = document.createElement("button");
+      btn.className = "material";
+      btn.textContent = name;
+      btn.addEventListener("click", () => clickMaterial(btn, name));
+      materials.appendChild(btn);
+    });
+
+    function clickMaterial(btn, name) {
+      if (PUZZLE_CONFIG.materialOrder[state.materialStep] === name) {
+        btn.classList.add("done");
+        state.materialStep += 1;
+        if (state.materialStep === PUZZLE_CONFIG.materialOrder.length) setJudge("工序无误。现在决定它是役鬼，还是活着的纸。");
+      } else {
+        state.materialStep = 0;
+        document.querySelectorAll(".material").forEach(b => b.classList.remove("done"));
+        setJudge("工序错了。役鬼不收残手。");
+      }
+    }
+
+    document.getElementById("makePerfect").addEventListener("click", () => {
+      if (state.materialStep < PUZZLE_CONFIG.materialOrder.length) return setJudge("工序未完。");
+      state.workshopChoice = "完美役鬼";
+      document.getElementById("paperMan").dataset.soul = "bound";
+      setJudge("合格。叁柒可以销毁。");
+      updateStatus();
+    });
+
+    document.getElementById("makeSentient").addEventListener("click", () => {
+      if (state.materialStep < PUZZLE_CONFIG.materialOrder.length) return setJudge("工序未完。");
+      state.workshopChoice = "自主缺陷";
+      state.judgeAngered = true;
+      document.getElementById("paperMan").dataset.soul = "awake";
+      setJudge("你故意留下缺陷。活人，你在挑衅阴司。");
+      updateStatus();
+    });
+
+    document.getElementById("helpQingyi").addEventListener("click", () => {
+      state.qingyiHelped = true;
+      state.judgeWeakness = true;
+      document.getElementById("qingyi").dataset.mood = "trusted";
+      setQingyi("我把纸鹤找回来了。陆判嘴硬，他其实不愿再看匠人被契约压死。你若要弹劾他，就说他三次放水。");
+      updateStatus();
+    });
+
+    document.getElementById("scoldQingyi").addEventListener("click", () => {
+      state.qingyiAngry = true;
+      state.qingyiHelped = false;
+      document.getElementById("qingyi").dataset.mood = "angry";
+      setQingyi("青衣不说了。青衣把一页纸藏到黑水里。");
+      if (!state.evidence.medical) state.evidence.medical = false;
+      updateStatus();
+    });
+
+    document.getElementById("verifyPrevious").addEventListener("click", () => {
+      const result = document.getElementById("previousResult");
+      if (localStorage.getItem("wuxing.chapter1Cleared") === "1") {
+        state.previousVerified = true;
+        localStorage.setItem("wuxing.chapter1Verified", "1");
+        result.textContent = "上一劫结案记录已恢复。无声皮影里，苏婉与陈五行携手过桥，纸人新娘化作白灰。桥下有无数未点眼的纸人抬头看他们，像在等一个轮到自己的判决。陆斩批注：原来你就是放走她的人。";
+        setJudge("上一劫见证人确认。你的证词有资格入卷。也有资格被追责。");
+      } else {
+        result.textContent = "未找到上一劫结案记录。此回响只影响残影内容，不会阻止本案调查。";
+      }
+      updateStatus();
+    });
+
+    document.getElementById("unlockEcho").addEventListener("click", () => {
+      const value = document.getElementById("dateInput").value.trim();
+      if (value === PUZZLE_CONFIG.echoDate) {
+        document.getElementById("echoResult").textContent = "录音碎片：救女儿可以，债要子孙还。按他的手，印上去。";
+        state.evidence.testimony = true;
+        updateStatus();
+      } else {
+        document.getElementById("echoResult").textContent = "日期不合。海报上的“七”字似乎有问题。";
+      }
+    });
+
+    const canvas = document.getElementById("puzzle");
+    const ctx = canvas.getContext("2d");
+    const slots = [{x:70,y:80},{x:240,y:80},{x:410,y:80}];
+    const pieces = [
+      {x:60,y:210,w:120,h:56,tx:70,ty:80,text:"药迷神智",placed:false},
+      {x:250,y:210,w:120,h:56,tx:240,ty:80,text:"强按血印",placed:false},
+      {x:430,y:210,w:120,h:56,tx:410,ty:80,text:"子孙代偿",placed:false}
+    ];
+    let drag = null;
+
+    function drawPuzzle() {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      const bg = ctx.createLinearGradient(0,0,0,canvas.height);
+      bg.addColorStop(0,"#d8bf74"); bg.addColorStop(1,"#a77b36");
+      ctx.fillStyle = bg; ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.save(); ctx.globalAlpha=.18; ctx.strokeStyle="#5a2a18";
+      for(let y=24;y<canvas.height;y+=18){ctx.beginPath();ctx.moveTo(0,y);ctx.bezierCurveTo(140,y+8,320,y-10,620,y+6);ctx.stroke();}
+      ctx.restore();
+      ctx.strokeStyle = "#7b1d14"; ctx.lineWidth = 3; ctx.font = "21px KaiTi, serif";
+      ctx.fillStyle="rgba(80,38,18,.2)"; ctx.fillRect(30,38,560,220);
+      slots.forEach((s,i) => { ctx.setLineDash([7,7]); ctx.strokeRect(s.x,s.y,120,56); ctx.fillStyle="rgba(80,20,12,.18)"; ctx.fillText(["药","印","债"][i],s.x+50,s.y+36); });
+      ctx.setLineDash([]);
+      pieces.forEach(p => {
+        ctx.fillStyle = p.placed ? "#e0ca83" : "#b5853a";
+        ctx.shadowColor = p.placed ? "rgba(255,225,140,.45)" : "rgba(0,0,0,.28)";
+        ctx.shadowBlur = p.placed ? 12 : 4;
+        ctx.fillRect(p.x,p.y,p.w,p.h);
+        ctx.shadowBlur = 0;
+        ctx.strokeRect(p.x,p.y,p.w,p.h);
+        ctx.fillStyle = "#65120d";
+        ctx.fillText(p.text,p.x+14,p.y+35);
+      });
+    }
+
+    canvas.addEventListener("pointerdown", e => {
+      const r = canvas.getBoundingClientRect();
+      const x = (e.clientX-r.left) * canvas.width/r.width;
+      const y = (e.clientY-r.top) * canvas.height/r.height;
+      drag = pieces.find(p => !p.placed && x>=p.x && x<=p.x+p.w && y>=p.y && y<=p.y+p.h) || null;
+    });
+    canvas.addEventListener("pointermove", e => {
+      if (!drag) return;
+      const r = canvas.getBoundingClientRect();
+      drag.x = (e.clientX-r.left) * canvas.width/r.width - drag.w/2;
+      drag.y = (e.clientY-r.top) * canvas.height/r.height - drag.h/2;
+      drawPuzzle();
+    });
+    canvas.addEventListener("pointerup", () => {
+      if (!drag) return;
+      if (Math.abs(drag.x-drag.tx)<45 && Math.abs(drag.y-drag.ty)<45) {
+        drag.x=drag.tx; drag.y=drag.ty; drag.placed=true;
+      }
+      drag=null; drawPuzzle();
+      if (pieces.every(p => p.placed)) {
+        state.evidence.testimony = true;
+        setJudge("叁柒能说话了。它没有喉咙，却把百年前堂上的话一字不差吐了出来。证词入卷。");
+        updateStatus();
+      }
+    });
+
+    function evidenceComplete() { return state.evidence.medical && state.evidence.testimony && state.evidence.alteration; }
+
+    function resolveCaseOutcome() {
+      if (!evidenceComplete()) return "A";
+      if (state.qingyiHelped && state.workshopChoice === "自主缺陷" && state.judgeAngered) return "D";
+      if (state.qingyiHelped && state.judgeWeakness && state.workshopChoice === "完美役鬼") return "C";
+      return "B";
+    }
+    document.getElementById("submitCase").addEventListener("click", () => showEnding(resolveCaseOutcome()));
+
+    function showEnding(type) {
+      const box = document.getElementById("endingText");
+      if (type === "B" && ENDING_FLAGS.enableHiddenD && evidenceComplete() && state.qingyiHelped && state.workshopChoice === "自主缺陷" && state.judgeAngered) type = "D";
+      if (type === "A" && ENDING_FLAGS.enableEndingA) {
+        box.textContent = "结局A【继任匠人】\n你选择代偿。陆斩没有讥讽你，只在案卷上盖下“准”字。档案司为你开出第一批订单：两千一百个役鬼纸人。\n\n最初几夜，你还能分清自己是在折纸，还是在替阴司折人的影子。后来每张黄纸落到桌上，都会自己翻到背面，露出编号、姓名、生卒和未尽的话。你学会不看那些字。\n\n系统关闭后，你的电脑桌面多出一个名为“新订单”的文件夹。里面没有文件，只有不断增长的页码。第二天清晨，第一张空白黄纸压在你的键盘上，边角写着：学徒，开工。";
+        saveOutcomeAndOfferBridge("A");
+      }
+      if (type === "B") {
+        if (!ENDING_FLAGS.enableEndingB || !evidenceComplete()) return box.textContent = "案卷被退回。\n陆斩批注：你带来的只是怀疑，不是可烧毁契约的证据。";
+        box.textContent = "结局B【契约废除】\n医疗记录、叁柒证词与契约涂改互相印证。陆斩把三份证据并排放在案上，第一次没有立刻落笔。他问你：若这份契无效，那么数百年来按契办事的阴司，又该怎么算？\n\n判火烧起时，血契没有像纸那样卷曲，而是发出一声像人松气的响。陈家世代诅咒终结，谱系树上所有“违约”印记逐个脱落，变成浅淡的灰。" + (state.previousVerified ? "\n\n因你校验了上一劫卷宗，系统额外恢复一封来自“陈五行”的残影感谢信：学生，这次你救的不只是我和苏婉。若还能见到青衣，替我向她道谢，她像极了我小时候不敢点眼的第一只纸人。" : "\n\n若能校验上一劫卷宗，还可恢复陈五行残影信。");
+        saveOutcomeAndOfferBridge("B");
+      }
+      if (type === "C") {
+        if (!ENDING_FLAGS.enableEndingC || !state.judgeWeakness) return box.textContent = "案卷被退回。\n档案司回复：批注不构成罪证，除非你知道判官在哪些地方亲手越过了规条。";
+        box.textContent = "结局C【判官更迭】\n你指出陆斩三次违规放水：允许活人查阴契、放任青衣传递弱点、默许叁柒留下证词。阴司高层震怒，陆斩没有辩解，只把判笔横放在案上。\n\n你被破格任命为新的录事判官。椅子很冷，冷得不像给活人坐的。第一天，你翻开契约司新卷，发现待审案不止陈家一宗。每个名字后面都跟着妻儿、债数和一行小字：照旧办理。\n\n案桌角落，放着青衣折的小纸鹤。纸鹤腹中写着：新判官，你会比他好吗？";
+        saveOutcomeAndOfferBridge("C");
+      }
+      if (type === "D") {
+        const ok = ENDING_FLAGS.enableHiddenD && evidenceComplete() && state.qingyiHelped && state.workshopChoice === "自主缺陷" && state.judgeAngered;
+        if (!ok) return box.textContent = "案卷被退回。\n这一页没有判词，只有一行淡得几乎看不见的批注：还不到问天条的时候。";
+        box.textContent = "结局D【阴阳两消】\n你指出阴司使用被胁迫的劳动力，本身已违天条。叁柒开口作证，声音先是纸片摩擦，后来渐渐像一个真正的人。青衣把纸鹤放上案卷，纸鹤展开，里面不是字，而是一小片从未见过阳光的白。\n\n" + (state.previousVerified ? "上一劫中被你释放的苏婉真魂在卷宗边缘留下一点白光。那光没有说话，却让所有役鬼纸人的眼睛亮了一瞬。\n\n" : "") + "陆斩沉默良久，说：或许，我们才是真正的役鬼。\n\n系统开始瓦解。黑底白字的界面裂成无数卷宗碎片，碎片里飞出三千、两千、一百、三十七……所有被当成数目的魂。它们越过判案桌，越过血契，越过陆斩低垂的笔，像一场倒流的纸雪。\n\n陈家旧债归零。阴司契约司第一次出现空白卷宗。最后一行字浮现又熄灭：第三章权限，待活人归档。";
+        saveOutcomeAndOfferBridge("D");
+      }
+    }
+
+    function saveOutcomeAndOfferBridge(outcome) {
+      const bridge = {
+        A: "第七夜，新订单的末页自行翻开，露出一张被忘川水泡皱的守桥公文：有七十九个残魂没有抵达轮回井。陆斩署名仍在，笔画却比从前轻。",
+        B: "血契化灰后的第三个月，灰烬在你的邮箱里凝成一封守桥密信：被释放的残魂并未全部去往轮回，其中七十九个被一枚来自昆仑的桃核截留。",
+        C: "你以新录事的权限截获一份越级异常日志：忘川渡缺失七十九名残魂，旧判官陆斩被调去守桥。日志末尾只有一句：请不要让她再续前缘。",
+        D: "系统瓦解后的第三个月，白纸雪中飞出的一个残魂替你带来守桥密信：七十九个魂被昆仑玉光截走，陆斩已经在那里等你。"
+      };
+      const branches = { A: "workshop", B: "abolish", C: "pact", D: "free" };
+      localStorage.setItem("wuxing.chapter2Outcome", outcome);
+      localStorage.setItem("wuxing.chapter3Branch", branches[outcome]);
+      const box = document.getElementById("endingText");
+      const continuation = document.createElement("div");
+      continuation.className = "continuation";
+      continuation.innerHTML = `<b>案卷余波：</b>${bridge[outcome]}<br><a href="chapter3-forgotten-river.html">接收忘川渡守桥密信</a>`;
+      box.appendChild(continuation);
+    }
+
+    function addAsh() {
+      const ash = document.createElement("span");
+      ash.style.cssText = `position:fixed;left:${Math.random()*100}vw;top:-10px;width:3px;height:8px;background:#b9aa88;opacity:.5;pointer-events:none;z-index:9;transition:transform 3s linear,opacity 3s;`;
+      document.body.appendChild(ash);
+      requestAnimationFrame(() => { ash.style.transform = `translateY(110vh) rotate(${Math.random()*180}deg)`; ash.style.opacity = "0"; });
+      setTimeout(() => ash.remove(), 3200);
+    }
+
+    setInterval(addAsh, 1800);
+    drawPuzzle();
+    if (localStorage.getItem("wuxing.chapter1Cleared") === "1" || localStorage.getItem("wuxing.chapter1Verified") === "1") {
+      state.previousVerified = localStorage.getItem("wuxing.chapter1Verified") === "1";
+      document.getElementById("previousResult").textContent = state.previousVerified
+        ? "已读取上一劫卷宗校验记录。"
+        : "检测到上一劫通关痕迹。输入木柜密码可恢复陈五行与苏婉的往生彩蛋。";
+    }
+    updateStatus();
+    setQingyi("青衣：你是上一劫活下来的人？那你应该知道，纸也会疼。");
+  </script>
+  <script src="js/exploration-expansion.js"></script>
+  <script src="js/arg-field-recorder.js"></script>
+</body>
+</html>

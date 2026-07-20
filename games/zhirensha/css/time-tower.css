@@ -1,0 +1,220 @@
+body.time-tower-page {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #28249b;
+  color: #fff;
+  text-align: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.tower-container {
+  width: 85%;
+  margin: 0 auto;
+  background-color: #fff;
+  padding: 20px;
+  padding-bottom: 80px;
+  border-radius: 10px;
+  color: #333;
+  flex: 1;
+  min-height: 700px;
+}
+
+.chronoscape-header {
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: -50px;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+}
+
+.chronoscape-logo {
+  width: 86px;
+  height: 86px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background:
+    radial-gradient(circle, #80cfff 0 18%, transparent 19%),
+    conic-gradient(from 45deg, #4da3ff, #28249b, #8051ff, #4da3ff);
+  border-radius: 50%;
+  font-size: 2rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,.2);
+}
+
+.chronoscape-title-wrapper {
+  text-align: left;
+}
+
+.chronoscape-title {
+  margin: 0;
+  font-size: 2.2rem;
+}
+
+.chronoscape-description {
+  margin: 0;
+  color: #555;
+}
+
+#chronoscape-search-section {
+  padding: 10px 0 30px;
+}
+
+.chronoscape-search-instruction {
+  margin: 4px 0;
+}
+
+.chronoscape-search-box {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+}
+
+.chronoscape-search-input {
+  width: min(520px, 70vw);
+  border: 1px solid #ccc;
+  padding: 12px 17px;
+  font-size: 16px;
+  border-radius: 5px 0 0 5px;
+}
+
+.chronoscape-search-btn {
+  border: 0;
+  padding: 12px 22px;
+  color: #fff;
+  background: #007bff;
+  border-radius: 0 5px 5px 0;
+  cursor: pointer;
+}
+
+.chronoscape-search-btn:hover {
+  background: #005dc1;
+}
+
+.results-wrapper {
+  width: min(780px, 92%);
+  min-height: 130px;
+  margin: 0 auto 30px;
+  padding: 18px;
+  border-radius: 8px;
+}
+
+.results-gradient-bg {
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, #5b80ff, #28249b);
+}
+
+.results-bordered {
+  color: #333;
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+
+.chronoscape-results-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.chronoscape-results-item {
+  margin: 8px 0;
+}
+
+.chronoscape-results-link {
+  color: #007bff;
+}
+
+.loading-dots {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 10px;
+}
+
+.loading-dots span {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #bbb;
+  margin: 0 3px;
+  opacity: .5;
+  animation: loadingFade 1s infinite;
+}
+
+.loading-dots span:nth-child(2) { animation-delay: .33s; }
+.loading-dots span:nth-child(3) { animation-delay: .66s; }
+
+#visitedPagesList {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+#visitedPagesList li {
+  margin: 5px 0;
+}
+
+#visitedPagesList a {
+  color: #007bff;
+}
+
+#pagination {
+  margin-top: 10px;
+}
+
+#pagination button {
+  margin: 0 5px;
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+#pagination button.active {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.page-number {
+  position: fixed;
+  right: 18px;
+  bottom: 12px;
+  color: rgba(255,255,255,.75);
+  font-size: .9rem;
+}
+
+@keyframes loadingFade {
+  0% { opacity: .5; background: #bbb; }
+  50% { opacity: 1; background: #666; }
+  100% { opacity: .5; background: #bbb; }
+}
+
+@media (max-width: 700px) {
+  .tower-container {
+    width: 92%;
+    min-height: 620px;
+  }
+
+  .chronoscape-header {
+    margin-left: 0;
+  }
+
+  .header-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .chronoscape-title-wrapper {
+    text-align: center;
+  }
+}
