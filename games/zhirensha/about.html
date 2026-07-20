@@ -23,12 +23,13 @@
         <p><b>2023-09-29 03:17</b> A-031 产生一条重复缓存。该缓存没有来源地址，只保留了癸卯年七月十五的时间戳。</p>
         <p><b>2023-10-31 00:03</b> 本页正文长度较上次备份多出 160px。差异区没有文本节点，颜色值也未登记在样式表内。</p>
       </div>
-      <div class="about-blank"><a class="tiny-entry" href="secret/ritual.html" aria-label="读取未登记的页面差异">04/36 · PATCH 03:17</a></div>
+      <div class="about-blank"><a class="tiny-entry" href="secret/ritual.html" aria-label="读取未登记的页面差异">04/36 · PATCH 03:17</a><span id="copy-rift" style="font-size:1px;color:transparent;user-select:text">点我的人，已入局</span></div>
     </div></section></main></div>
   </div>
   <footer><small><span class="first-line">本网站内容为虚构 ARG 游戏作品，与任何真实人物、团体或事件无关</span><span class="second-line">Copyright&copy; 陈五行旧站备份. All Rights Reserved.&nbsp;&nbsp;&nbsp;04/36</span></small></footer>
   <div class="pagetop"><a href="#">▲</a></div><div id="menubar_hdr"><span></span><span></span><span></span></div>
-  <script>localStorage.setItem("wuxing.arg.aboutViewed", "1");</script>
+  <!-- 密码是1234 -->
+  <script>localStorage.setItem("wuxing.arg.aboutViewed", "1");document.addEventListener("copy",()=>{if(getSelection().toString().includes("点我的人")){localStorage.setItem("zhirensha.arg.xiao","1");const n=document.createElement("i");n.textContent="xiao";n.style.cssText="position:fixed;inset:0;display:grid;place-items:center;color:rgba(40,40,40,.18);font:76px KaiTi;pointer-events:none;z-index:99";document.body.append(n);setTimeout(()=>n.remove(),850)}});</script>
   <script src="js/exploration-expansion.js"></script>
 </body>
 </html>

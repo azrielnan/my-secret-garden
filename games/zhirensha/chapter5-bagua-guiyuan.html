@@ -118,7 +118,7 @@
     endingBtn.onclick=()=>{if(localStorage.getItem("zhirensha.arg.recoveredLedger")!=="1"){ending.textContent="归元印缺少 E-006 的炉灰比对，六字阵路无法闭合。";return;}if(!(state.li&&state.completed.size===5&&state.order.length===6)){ending.textContent="归元阵尚未闭合。须依次完成坎、坤、震、巽、乾五门，并以离火丹炉归元。";return;}let text;if(state.taiji&&state.silentQian&&state.kan==="救"&&state.comforted&&state.dragonMercy)text="隐藏结局E【归元子·与道合真】\n你没有把任何人当作题目的答案。纸人得到回应，烛龙留下泪，太极在炉壁化作一朵有六十五瓣的莲。";else if(state.kan==="救"&&state.comforted&&state.zhen>=9)text="结局B【六十五卦·大情道】\n你救起纸人并听完她的话，又逐条质询残规。情卦被刻入太极，成为第六十五卦。";else if(state.kan==="舍"&&state.qian==="B")text="结局A【六十四卦·无情道】\n你让黑水复归，也认可旧道无情。丹火把情卦焚为灰，太极回到没有裂纹的样子。";else if(state.taiji&&state.qian==="D")text="结局D【道可道非常道·超越】\n你在炉壁留下未封口的太极。归元子没有替你命名，空白符箓落入掌心。";else text="结局C【道不远人·中庸】\n情卦没有被写成规则，也没有被抹去。它化为太极中间一条仍可改变的曲线。";ending.textContent=text;const echo=explorationEffects.wish||explorationEffects.message;if(echo)ending.textContent+=`\n\n归元印背面浮出一行天外之音：${echo}`;const player=document.createElement("img");player.className="ending-player";player.src="images/player-archivist.png";player.alt="走到归元阵尽头的调查者";ending.appendChild(player)};
   </script>
   <script src="js/exploration-expansion.js"></script>
-  <script src="js/arg-field-recorder.js"></script>
+  <script src="js/arg-field-recorder.js"></script><script src="js/arg-expansion-v4.js"></script>
   <script>
     document.getElementById("endingBtn").addEventListener("click", () => {
       window.setTimeout(() => {

@@ -118,19 +118,28 @@
     ctx.font = "700 46px STXingkai, 华文行楷, LiSu, KaiTi, serif";
     ctx.fillText("纸骨镇煞", 180, 108);
     ctx.font = "700 31px STXingkai, 华文行楷, LiSu, KaiTi, serif";
-    ctx.fillText("数三七零四", 180, 158);
+    ctx.fillText(p > .70 && p < .73 ? "" : "八 三 影 四", 180, 158);
     ctx.font = "900 74px STXingkai, 华文行楷, LiSu, SimSun, serif";
-    ctx.fillText("3", 88, 286);
-    ctx.fillText("7", 255, 244);
-    ctx.fillText("0", 126, 402);
-    ctx.fillText("4", 262, 430);
+    if (p > .70 && p < .73) {
+      ctx.fillText("3", 88, 286);
+      ctx.fillText("7", 255, 244);
+      ctx.fillText("0", 126, 402);
+      ctx.fillText("4", 262, 430);
+      ctx.fillStyle = "rgba(130,19,13,.78)";
+      ctx.fillRect(83, 386, 87, 7);
+    } else {
+      ctx.fillText("8", 88, 286);
+      ctx.fillText("3", 255, 244);
+      ctx.fillText("6", 126, 402);
+      ctx.fillText("4", 262, 430);
+    }
     ctx.restore();
 
     ctx.strokeStyle = "rgba(79,36,11,.36)";
     ctx.lineWidth = 10;
     ctx.strokeRect(10, 10, 340, 520);
 
-    const visible = p > .96;
+    const visible = p > .70 && p < .73;
     bloodLine.classList.toggle("visible", visible);
     codePanel.classList.toggle("visible", visible);
   }
@@ -181,19 +190,14 @@
     });
   });
 
-  whisperHotspot.addEventListener("pointerdown", () => whisperHotspot.classList.add("revealed"));
+  compassWrap.addEventListener("contextmenu", event => {
+    event.preventDefault();
+    whisperHotspot.querySelector(".whisper").textContent = "生之序，始于青。";
+    whisperHotspot.classList.add("revealed");
+  });
   slider.addEventListener("input", event => draw(event.target.value));
 
-  buildKeypad(keypad, num => {
-    if (input.length >= 4) return;
-    input += num;
-    renderSlots(slots, input);
-  }, () => {
-    input = input.slice(0, -1);
-    renderSlots(slots, input);
-  });
-
-  document.getElementById("enterSeal").addEventListener("click", () => {
+  function verifyTalisman() {
     if (input === talismanCode) {
       show(sealStage);
       ring(520, .12, "triangle");
@@ -201,11 +205,22 @@
     }
     input = "";
     renderSlots(slots, input);
-    errorText.textContent = "阴气反冲";
     codePanel.classList.remove("shake");
     void codePanel.offsetWidth;
     codePanel.classList.add("shake");
+  }
+
+  buildKeypad(keypad, num => {
+    if (input.length >= 4) return;
+    input += num;
+    renderSlots(slots, input);
+    if (input.length === 4) setTimeout(verifyTalisman, 3000);
+  }, () => {
+    input = input.slice(0, -1);
+    renderSlots(slots, input);
   });
+
+  document.getElementById("enterSeal").addEventListener("click", verifyTalisman);
 
   buildKeypad(sealKeypad, num => {
     if (sealInput.length >= 4) return;
