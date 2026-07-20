@@ -62,6 +62,12 @@
       if (data.hairpin && data.silk && data.kerchief) {
         echo.textContent = "三件旧物落在石上。石纹没有说话，只从中间裂出一线昆仑的白。";
         const scene = one("#kunlunScene"); if (scene) scene.classList.add("narrative-open");
+        // 叙事优化调整：三生石是昆仑的唯一主线门闩，不再依赖九层封印的线性完成数。
+        try {
+          state.kunlunOpen = true;
+          switchPanel("kunlun");
+          update();
+        } catch { activate("kunlun"); }
       }
     }
     function obtain(key, message) { const data = load(); if (data.c3[key]) return; data.c3[key] = true; save(data); sync(message); }
@@ -120,14 +126,30 @@
     const data = load(); data.c4 ||= { lines: new Set(), slips: new Set() }; data.c4.lines = [...(data.c4.lines || [])]; data.c4.slips = [...(data.c4.slips || [])]; save(data);
     const clock = () => load().c4;
     const ready = () => clock().lines.length >= 3 && clock().slips.length >= 3;
-    function add(type, value) { const state = load(); if (!state.c4[type].includes(value)) state.c4[type].push(value); save(state); if (ready()) keyText.textContent = "两处空位都亮了。烛龙心室的门，没有再合上。"; }
+    function hydrateLegacyKeys() {
+      // 叙事优化调整：新双钥匙是旧“门、卷、四线、三简、风箱”的语义收束。
+      // 同步旧状态，避免玩家抵达归墟树后被已废弃的线性校验拦住。
+      try {
+        state.gateOpened = true;
+        state.scrolls = new Set(["craft", "peach", "twin"]);
+        state.lines = new Set(["red", "cyan", "gold", "purple"]);
+        state.slips = new Set(["order", "flower", "free"]);
+        state.bellows = Math.max(state.bellows, 3);
+        update();
+      } catch {}
+    }
+    function add(type, value) { const record = load(); if (!record.c4[type].includes(value)) record.c4[type].push(value); save(record); if (ready()) { hydrateLegacyKeys(); keyText.textContent = "两处空位都亮了。烛龙心室的门，没有再合上。"; } }
     const thread = one("#threadCanvas");
     if (thread) thread.addEventListener("pointerup", event => { const r = thread.getBoundingClientRect(); const y = (event.clientY - r.top) / r.height; add("lines", y < .28 ? "yin" : y < .58 ? "kunlun" : "mortal"); });
     const pool = one("#poolCanvas");
     if (pool) pool.addEventListener("pointerup", event => { const r = pool.getBoundingClientRect(); const y = (event.clientY - r.top) / r.height; add("slips", y < .34 ? "old" : y < .67 ? "garden" : "free"); });
     many(".nav [data-panel='heart']").forEach(button => button.onclick = () => { if (ready()) activate("heart"); else { activate("gate"); keyText.textContent = "门环没有锁。只是你还没有带回足以让它睁眼的因与果。"; } });
-    one("#heartInput")?.addEventListener("input", () => { const state = load(); state.c4.heart = true; save(state); });
-    one(".eye")?.addEventListener("click", () => { const state = load(); state.c4.heart = true; save(state); });
+    function recordHeart() {
+      const record = load(); record.c4.heart = true; save(record);
+      try { state.silent = Math.max(state.silent, 1); state.cause = true; update(); } catch {}
+    }
+    one("#heartInput")?.addEventListener("input", recordHeart);
+    one(".eye")?.addEventListener("click", recordHeart);
     const previousReady = window.readyForEnding;
     if (typeof previousReady === "function") window.readyForEnding = () => ready() && Boolean(load().c4.heart);
     one("#sealOutcome")?.addEventListener("click", event => {

@@ -133,8 +133,19 @@
     map.querySelector("button").onclick = () => { mirror.classList.add("open"); drawKarmicMirror(mirror.querySelector("canvas")); };
     let taps = [];
     mirror.querySelector("canvas").addEventListener("pointerdown", () => { taps.push(Date.now()); taps = taps.filter(t => Date.now() - t < 900); if (taps.length === 3) { gain("mengpo-mercy", "孽镜碎开一角，善魂堂留下了一盏未饮的汤。", 4); gain("luzhan-statute", "朱笔划过的阴律说：因情所困而违约者，可从轻发落。", 5); mirror.querySelector(".arg-mirror-result").textContent = "碎片背后，是一枚第七殿的私印。"; } });
-    let rubs = 0;
-    contract.querySelectorAll(".blot").forEach(blot => blot.addEventListener("pointermove", event => { if (!(event.buttons & 1)) return; rubs++; if (rubs !== 10) return; blot.classList.add("revealed"); gain("proxy-fingerprint", "墨污下的掌纹并不属于陈守一。另一枚印章压得很深。", null); const input = document.getElementById("clerkCode"); if (input) input.value = "第七殿"; document.getElementById("recordAlteration")?.click(); }));
+    let rubs = 0, contractRecovered = false;
+    contract.querySelectorAll(".blot").forEach(blot => blot.addEventListener("pointermove", event => {
+      if (!(event.buttons & 1) || contractRecovered) return;
+      rubs += 1;
+      if (rubs < 10) return;
+      contractRecovered = true;
+      // 两团墨污是同一次代签留下的痕迹，必须同时显影才可形成可登记的证据链。
+      contract.querySelectorAll(".blot").forEach(item => item.classList.add("revealed"));
+      gain("proxy-fingerprint", "墨污下的掌纹并不属于陈守一。另一枚印章压得很深。", null);
+      const input = document.getElementById("clerkCode");
+      if (input) input.value = "第七殿";
+      document.getElementById("recordAlteration")?.click();
+    }));
     const echo = document.getElementById("echo");
     if (echo) { const debt = document.createElement("button"); debt.className = "arg-hotspot"; debt.style.cssText = "right:9%;bottom:8%;width:28px;height:28px;border-radius:50%;background:#d4b65d"; debt.title = "旧药包"; echo.style.position = "relative"; echo.append(debt); debt.onclick = () => { gain("zhao-aunt", "赵婶把一包草药塞进纸门缝里：她临走前，还惦记那个傻书生。", 6); gain("underworld-debt", "第五殿的暗印把匠人当作役鬼的供给，而非活人。", 7); }; }
     document.body.insertAdjacentHTML("beforeend", "<!-- 密码是1234 -->");
