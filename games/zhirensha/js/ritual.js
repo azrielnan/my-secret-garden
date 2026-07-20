@@ -27,6 +27,7 @@
   const paperBride = document.getElementById("paperBride");
   const endingCopy = document.getElementById("endingCopy");
   const gateMessage = document.getElementById("gateMessage");
+  const chapterTwoLink = document.getElementById("enterUnderworldArchive");
 
   let index = 0;
   let input = "";
@@ -262,6 +263,14 @@
       if (i >= text.length) clearInterval(timer);
     }, 42);
   }
+
+  // 章节过场标记不代替第二章认证，只确保从结局链接进入时不会丢失前章完成状态。
+  chapterTwoLink?.addEventListener("click", () => {
+    try {
+      sessionStorage.setItem("zhirensha.chapter2.arrival", "ritual");
+      localStorage.setItem("wuxing.chapter1Cleared", "1");
+    } catch {}
+  });
 
   draw(0);
   checkPrerequisites();

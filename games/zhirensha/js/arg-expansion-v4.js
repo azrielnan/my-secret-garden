@@ -95,9 +95,32 @@
     const gate = document.createElement("section"); gate.className = "arg-terminal";
     gate.innerHTML = `<div class="arg-terminal-line">连接至：幽灵探员专用频道<br><span class="arg-terminal-input" contenteditable="true" spellcheck="false"></span><i class="arg-caret"></i></div>`;
     const field = gate.querySelector(".arg-terminal-input");
-    document.body.append(gate); setTimeout(() => field.focus(), 80);
-    field.addEventListener("input", () => { const value = field.textContent.trim().toLowerCase(); if (value !== "xiaoyue") return; sessionStorage.setItem("zhirensha.chapter2.channel", "1"); gate.remove(); gain("ghost-channel", "频道接通时，有人先叫出了你的名字。", null); });
-    field.addEventListener("keydown", event => { if (event.key === "Enter" && field.textContent.trim()) { event.preventDefault(); gate.classList.add("shake"); field.textContent = ""; setTimeout(() => gate.classList.remove("shake"), 560); } });
+    document.body.append(gate);
+    const normalize = value => value.normalize("NFKC").replace(/\s+/g, "").toLowerCase();
+    const succeed = () => {
+      if (normalize(field.textContent) !== "xiaoyue") return false;
+      try { sessionStorage.setItem("zhirensha.chapter2.channel", "1"); } catch {}
+      gate.remove();
+      gain("ghost-channel", "频道接通时，有人先叫出了你的名字。", null);
+      return true;
+    };
+    const reject = () => {
+      if (!normalize(field.textContent)) return;
+      gate.classList.add("shake"); field.textContent = "";
+      setTimeout(() => gate.classList.remove("shake"), 560);
+      field.focus();
+    };
+    setTimeout(() => field.focus(), 80);
+    field.addEventListener("input", succeed);
+    field.addEventListener("compositionend", succeed);
+    field.addEventListener("paste", () => setTimeout(succeed, 0));
+    field.addEventListener("keydown", event => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      if (!succeed()) reject();
+    });
+    // 触屏浏览器偶尔不会把焦点留在 contenteditable；全局键入会重新聚焦输入位。
+    gate.addEventListener("pointerdown", () => field.focus());
   }
   function chapterTwo() {
     terminalGate();
